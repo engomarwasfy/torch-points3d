@@ -78,7 +78,7 @@ class Testhelpers(unittest.TestCase):
         y = np.linspace(0, 1, N)
         xv, yv = np.meshgrid(x, y)
 
-        pos = torch.tensor([xv.flatten(), yv.flatten(), np.zeros(N * N)]).T
+        pos = torch.tensor([xv.flatten(), yv.flatten(), np.zeros(N**2)]).T
         x = torch.ones_like(pos)
         d = Data(pos=pos, x=x).contiguous()
         ms_transform = MultiScaleTransform({"sampler": samplers, "neighbour_finder": search, "upsample_op": upsampler})
@@ -140,13 +140,10 @@ class Testhelpers(unittest.TestCase):
                             c += 1
                             continue
 
-                        if not atx:
+                        if atx and fn == "none" or not atx:
                             self.assertEqual(data.x.shape, torch.Size([10]))
                         else:
-                            if fn == "none":
-                                self.assertEqual(data.x.shape, torch.Size([10]))
-                            else:
-                                self.assertEqual(data.x.shape, torch.Size([10, 2]))
+                            self.assertEqual(data.x.shape, torch.Size([10, 2]))
 
                         c += 1
 

@@ -283,7 +283,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
         self.mlps = nn.ModuleList()
         self.mappings = nn.ModuleList()
 
-        self._first_layer = True if len(down_conv_nn) == 2 else False
+        self._first_layer = len(down_conv_nn) == 2
 
         if self._first_layer:
             C_in, C_intermediate, C_out = down_conv_nn[0]
@@ -353,17 +353,12 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
 
         if features is not None:
             grouped_features = tp.grouping_operation(features, idx)
-            if self.use_xyz:
-                new_features = torch.cat(
+            return torch.cat(
                     [raw_grouped_xyz, grouped_xyz, grouped_features], dim=1
-                )  # (B, 3 + 3 + C, npoint, nsample)
-            else:
-                new_features = grouped_features
+                ) if self.use_xyz else grouped_features
         else:
             assert self.use_xyz, "Cannot have not features and not use xyz as a feature!"
-            new_features = torch.cat([raw_grouped_xyz, grouped_xyz], dim=1)
-
-        return new_features
+            return torch.cat([raw_grouped_xyz, grouped_xyz], dim=1)
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
         """ Implements a Dense convolution where radius_idx represents
@@ -381,10 +376,9 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
         """
         assert scale_idx < len(self.mlps)
         aggr_features = self._prepare_features(pos, new_pos, x, radius_idx)
-        new_features = self.mlps[scale_idx](
+        return self.mlps[scale_idx](
             aggr_features
-        )  # (B, 3 + 3 + C, npoint, nsample) -> (B, mlp[-1], npoint, nsample)
-        return new_features
+        )
 
     def __repr__(self):
         return "{}: {} ({}, shared: {} {} {})".format(

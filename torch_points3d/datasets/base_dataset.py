@@ -100,13 +100,15 @@ class BaseDataset:
         Returns:
             [type] -- [description]
         """
-        if isinstance(transform_in, Compose) or isinstance(transform_in, list):
+        if isinstance(transform_in, (Compose, list)):
             if len(list_transform_class) > 0:
-                transform_out = []
                 transforms = transform_in.transforms if isinstance(transform_in, Compose) else transform_in
-                for t in transforms:
-                    if not isinstance(t, tuple(list_transform_class)):
-                        transform_out.append(t)
+                transform_out = [
+                    t
+                    for t in transforms
+                    if not isinstance(t, tuple(list_transform_class))
+                ]
+
                 transform_out = Compose(transform_out)
         else:
             transform_out = transform_in
@@ -166,11 +168,10 @@ class BaseDataset:
                 raise NotImplementedError(
                     "MultiscaleTransform is activated and supported only for partial_dense format"
                 )
+        elif is_dense:
+            fn = SimpleBatch.from_data_list
         else:
-            if is_dense:
-                fn = SimpleBatch.from_data_list
-            else:
-                fn = torch_geometric.data.batch.Batch.from_data_list
+            fn = torch_geometric.data.batch.Batch.from_data_list
         return partial(BaseDataset._collate_fn, collate_fn=fn, pre_collate_transform=pre_collate_transform)
 
     @staticmethod
@@ -300,20 +301,15 @@ class BaseDataset:
 
     @test_dataset.setter
     def test_dataset(self, value):
-        if isinstance(value, list):
-            self._test_dataset = value
-        else:
-            self._test_dataset = [value]
-
+        self._test_dataset = value if isinstance(value, list) else [value]
         for i, dataset in enumerate(self._test_dataset):
-            if not hasattr(dataset, "name"):
-                if self.num_test_datasets > 1:
-                    setattr(dataset, "name", "test_%i" % i)
-                else:
-                    setattr(dataset, "name", "test")
-            else:
+            if hasattr(dataset, "name"):
                 self._contains_dataset_name = True
 
+            elif self.num_test_datasets > 1:
+                setattr(dataset, "name", "test_%i" % i)
+            else:
+                setattr(dataset, "name", "test")
         # Check for uniqueness
         all_names = [d.name for d in self.test_dataset]
         if len(set(all_names)) != len(all_names):
@@ -470,15 +466,14 @@ class BaseDataset:
         current_transform = getattr(attr.dataset, "transform", None)
         if current_transform is None:
             setattr(attr.dataset, "transform", transform)
-        else:
-            if (
+        elif (
                 isinstance(current_transform, Compose) and transform not in current_transform.transforms
             ):  # The transform contains several transformations
-                current_transform.transforms += [transform]
-            elif current_transform != transform:
-                setattr(
-                    attr.dataset, "transform", Compose([current_transform, transform]),
-                )
+            current_transform.transforms += [transform]
+        elif current_transform != transform:
+            setattr(
+                attr.dataset, "transform", Compose([current_transform, transform]),
+            )
 
     def _set_multiscale_transform(self, transform):
         for _, attr in self.__dict__.items():

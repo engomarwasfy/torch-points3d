@@ -139,8 +139,5 @@ class FPModule_PD(BaseModule):
         if x_skip is not None:
             x = torch.cat([x, x_skip], dim=1)
 
-        if hasattr(self, "nn"):
-            batch_out.x = self.nn(x)
-        else:
-            batch_out.x = x
+        batch_out.x = self.nn(x) if hasattr(self, "nn") else x
         return batch_out

@@ -35,8 +35,7 @@ class ClassificationTracker(BaseTracker):
     @staticmethod
     def compute_acc(y_hat, y):
         labels_hat = torch.argmax(y_hat, dim=1)
-        acc = torch.sum(y == labels_hat).item() / (len(y) * 1.0)
-        return acc
+        return torch.sum(y == labels_hat).item() / (len(y) * 1.0)
 
     def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking

@@ -46,9 +46,7 @@ class RandlaKernel(MessagePassing):
         g_fij = self.attention_nn(fij_hat)
         s_ij = F.softmax(g_fij, -1)
 
-        msg = s_ij * fij_hat
-
-        return msg
+        return s_ij * fij_hat
 
     def update(self, aggr_out):
         return self.global_nn(aggr_out)

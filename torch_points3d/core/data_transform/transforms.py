@@ -73,7 +73,7 @@ class PointCloudFusion(object):
         return data
 
     def __call__(self, data_list: List[Data]):
-        if len(data_list) == 0:
+        if not data_list:
             raise Exception("A list of data should be provided")
         elif len(data_list) == 1:
             return data_list[0]
@@ -109,7 +109,7 @@ class GridSphereSampling(object):
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
         grid_size = eval(grid_size) if isinstance(grid_size, str) else float(grid_size)
-        self._grid_sampling = GridSampling3D(size=grid_size if grid_size else self._radius)
+        self._grid_sampling = GridSampling3D(size=grid_size or self._radius)
         self._delattr_kd_tree = delattr_kd_tree
         self._center = center
 
@@ -177,7 +177,7 @@ class GridCylinderSampling(object):
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
         grid_size = eval(grid_size) if isinstance(grid_size, str) else float(grid_size)
-        self._grid_sampling = GridSampling3D(size=grid_size if grid_size else self._radius)
+        self._grid_sampling = GridSampling3D(size=grid_size or self._radius)
         self._delattr_kd_tree = delattr_kd_tree
         self._center = center
 
@@ -327,12 +327,13 @@ class SphereSampling:
             if key == self.KDTREE_KEY:
                 continue
             item = data[key]
-            if torch.is_tensor(item) and num_points == item.shape[0]:
-                item = item[ind]
-                if self._align_origin and key == "pos":  # Center the sphere.
-                    item -= t_center
-            elif torch.is_tensor(item):
-                item = item.clone()
+            if torch.is_tensor(item):
+                if num_points == item.shape[0]:
+                    item = item[ind]
+                    if self._align_origin and key == "pos":  # Center the sphere.
+                        item -= t_center
+                else:
+                    item = item.clone()
             setattr(new_data, key, item)
         return new_data
 
@@ -382,12 +383,13 @@ class CylinderSampling:
             if key == self.KDTREE_KEY:
                 continue
             item = data[key]
-            if torch.is_tensor(item) and num_points == item.shape[0]:
-                item = item[ind]
-                if self._align_origin and key == "pos":  # Center the cylinder.
-                    item[:, :-1] -= t_center
-            elif torch.is_tensor(item):
-                item = item.clone()
+            if torch.is_tensor(item):
+                if num_points == item.shape[0]:
+                    item = item[ind]
+                    if self._align_origin and key == "pos":  # Center the cylinder.
+                        item[:, :-1] -= t_center
+                else:
+                    item = item.clone()
             setattr(new_data, key, item)
         return new_data
 
@@ -416,10 +418,11 @@ class Select:
             if key == KDTREE_KEY:
                 continue
             item = data[key]
-            if torch.is_tensor(item) and num_points == item.shape[0]:
-                item = item[self._indices].clone()
-            elif torch.is_tensor(item):
-                item = item.clone()
+            if torch.is_tensor(item):
+                if num_points == item.shape[0]:
+                    item = item[self._indices].clone()
+                else:
+                    item = item.clone()
             setattr(new_data, key, item)
         return new_data
 
@@ -467,10 +470,9 @@ class RandomSymmetry(object):
     def __call__(self, data):
 
         for i, ax in enumerate(self.axis):
-            if ax:
-                if torch.rand(1) < 0.5:
-                    c_max = torch.max(data.pos[:, i])
-                    data.pos[:, i] = c_max - data.pos[:, i]
+            if ax and torch.rand(1) < 0.5:
+                c_max = torch.max(data.pos[:, i])
+                data.pos[:, i] = c_max - data.pos[:, i]
         return data
 
     def __repr__(self):
@@ -623,9 +625,7 @@ class MultiScaleTransform(object):
                     upsample_index += 1
                     pre_up = upsampler.precompute(query, support)
                     upsample.append(pre_up)
-                    special_params = {}
-                    special_params["x_idx"] = query.num_nodes
-                    special_params["y_idx"] = support.num_nodes
+                    special_params = {'x_idx': query.num_nodes, 'y_idx': support.num_nodes}
                     setattr(pre_up, "__inc__", self.__inc__wrapper(pre_up.__inc__, special_params))
             else:
                 query = new_data
@@ -1000,8 +1000,11 @@ class EllipsoidCrop(object):
         self.random_rotation = Random3AxisRotation(rot_x=rot_x, rot_y=rot_y, rot_z=rot_z)
 
     def _compute_mask(self, pos: torch.Tensor):
-        mask = (pos[:, 0] ** 2 / self._a2 + pos[:, 1] ** 2 / self._b2 + pos[:, 2] ** 2 / self._c2) < 1
-        return mask
+        return (
+            pos[:, 0] ** 2 / self._a2
+            + pos[:, 1] ** 2 / self._b2
+            + pos[:, 2] ** 2 / self._c2
+        ) < 1
 
     def __call__(self, data):
         data_temp = data.clone()

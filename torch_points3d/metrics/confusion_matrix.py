@@ -88,7 +88,7 @@ class ConfusionMatrix:
             total_gt = np.sum(self.confusion_matrix[i, :])
             if total_gt:
                 label_presents += 1
-                re = re + self.confusion_matrix[i][i] / max(1, total_gt)
+                re += self.confusion_matrix[i][i] / max(1, total_gt)
         if label_presents == 0:
             return 0
         return re / label_presents

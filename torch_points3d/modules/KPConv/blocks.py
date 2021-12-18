@@ -52,17 +52,11 @@ class SimpleBlock(BaseModule):
         search_radius = density_parameter * sigma * prev_grid_size
         self.neighbour_finder = RadiusNeighbourFinder(search_radius, max_num_neighbors, conv_type=self.CONV_TYPE)
 
-        if bn:
-            self.bn = bn(num_outputs, momentum=bn_momentum)
-        else:
-            self.bn = None
+        self.bn = bn(num_outputs, momentum=bn_momentum) if bn else None
         self.activation = activation
 
         is_strided = prev_grid_size != grid_size
-        if is_strided:
-            self.sampler = GridSampling3D(grid_size)
-        else:
-            self.sampler = None
+        self.sampler = GridSampling3D(grid_size) if is_strided else None
 
     def forward(self, data, precomputed=None, **kwargs):
         if not hasattr(data, "block_idx"):
@@ -71,11 +65,7 @@ class SimpleBlock(BaseModule):
         if precomputed:
             query_data = precomputed[data.block_idx]
         else:
-            if self.sampler:
-                query_data = self.sampler(data.clone())
-            else:
-                query_data = data.clone()
-
+            query_data = self.sampler(data.clone()) if self.sampler else data.clone()
         if precomputed:
             idx_neighboors = query_data.idx_neighboors
             q_pos = query_data.pos
@@ -134,7 +124,7 @@ class ResnetBBlock(BaseModule):
         **kwargs,
     ):
         super(ResnetBBlock, self).__init__()
-        assert len(down_conv_nn) == 2 or len(down_conv_nn) == 3, "down_conv_nn should be of size 2 or 3"
+        assert len(down_conv_nn) in [2, 3], "down_conv_nn should be of size 2 or 3"
         if len(down_conv_nn) == 2:
             num_inputs, num_outputs = down_conv_nn
             d_2 = num_outputs // 4
@@ -144,11 +134,7 @@ class ResnetBBlock(BaseModule):
         self.has_bottleneck = has_bottleneck
 
         # Main branch
-        if self.has_bottleneck:
-            kp_size = [d_2, d_2]
-        else:
-            kp_size = [num_inputs, num_outputs]
-
+        kp_size = [d_2, d_2] if self.has_bottleneck else [num_inputs, num_outputs]
         self.kp_conv = SimpleBlock(
             down_conv_nn=kp_size,
             grid_size=grid_size,
@@ -176,16 +162,15 @@ class ResnetBBlock(BaseModule):
                 self.unary_2 = torch.nn.Sequential(Lin(d_2, num_outputs, bias=False), activation)
 
         # Shortcut
-        if num_inputs != num_outputs:
-            if bn:
-                self.shortcut_op = torch.nn.Sequential(
-                    Lin(num_inputs, num_outputs, bias=False), bn(num_outputs, momentum=bn_momentum)
-                )
-            else:
-                self.shortcut_op = Lin(num_inputs, num_outputs, bias=False)
-        else:
+        if num_inputs == num_outputs:
             self.shortcut_op = torch.nn.Identity()
 
+        elif bn:
+            self.shortcut_op = torch.nn.Sequential(
+                Lin(num_inputs, num_outputs, bias=False), bn(num_outputs, momentum=bn_momentum)
+            )
+        else:
+            self.shortcut_op = Lin(num_inputs, num_outputs, bias=False)
         # Final activation
         self.activation = activation
 
@@ -257,9 +242,9 @@ class KPDualBlock(BaseModule):
         self.blocks = torch.nn.ModuleList()
         for i, class_name in enumerate(block_names):
             # Constructing extra keyword arguments
-            block_kwargs = {}
-            for key, arg in kwargs.items():
-                block_kwargs[key] = arg[i] if is_list(arg) else arg
+            block_kwargs = {
+                key: arg[i] if is_list(arg) else arg for key, arg in kwargs.items()
+            }
 
             # Building the block
             kpcls = getattr(sys.modules[__name__], class_name)

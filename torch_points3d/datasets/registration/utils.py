@@ -29,7 +29,7 @@ def files_exist(files):
     taken from https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/data/dataset.html#Dataset
     """
 
-    return all([osp.exists(f) for f in files])
+    return all(osp.exists(f) for f in files)
 
 
 def makedirs(path):
@@ -65,9 +65,8 @@ def extract_pcd(depth_image, K, color_image=None):
     pcd = np.vstack((Xworld, Yworld, Z[mask_z])).T
     if color_image is None:
         return pcd
-    else:
-        color = color_image.reshape(-1, 3)[mask_z, :]
-        return pcd, color
+    color = color_image.reshape(-1, 3)[mask_z, :]
+    return pcd, color
 
 
 def rgbd2pcd(path_img, path_intrinsic, path_trans, path_color=None):
@@ -107,11 +106,10 @@ def rgbd2fragment_rough(
         if list_path_color is not None:
             path_color = list_path_color[i]
             pcd, color = rgbd2pcd(path_img, path_intrinsic, path_trans, path_color=path_color)
-            one_fragment.append(pcd)
             one_color.append(color)
         else:
             pcd = rgbd2pcd(path_img, path_intrinsic, path_trans, path_color=path_color)
-            one_fragment.append(pcd)
+        one_fragment.append(pcd)
         if (i + 1) % num_frame_per_fragment == 0:
             pos = torch.from_numpy(np.concatenate(one_fragment, axis=0))
             if list_path_color is None:
@@ -136,10 +134,7 @@ def filter_pair(pair, dist):
     give a pair of indices where the distance is positive
     """
     pair = pair[dist[:, 0] >= 0]
-    if len(pair) > 0:
-        pair = pair.numpy()[:, ::-1]
-    else:
-        pair = np.array([])
+    pair = pair.numpy()[:, ::-1] if len(pair) > 0 else np.array([])
     return pair
 
 
@@ -163,13 +158,7 @@ def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=
             max_num=num_pos, mode=1, sorted=True)
         pair2 = filter_pair(pair2, dist2)
         overlap.append(pair2.shape[0] / len(data2.pos))
-    # overlap = pair.shape[0] / \
-    #    (len(data1.pos) + len(data2.pos) - pair.shape[0])
-    # print(pair)
-
-    # print(path1, path2, "overlap=", overlap)
-    output = dict(pair=pair, pair2=pair2, overlap=overlap)
-    return output
+    return dict(pair=pair, pair2=pair2, overlap=overlap)
 
 def compute_subsampled_matches(data1, data2, voxel_size=0.1, max_distance_overlap=0.02):
     """
@@ -288,9 +277,8 @@ class PatchExtractor:
         row, col = ind[dist[:, 0] > 0].t()
         patch = Data()
         for key in data.keys:
-            if torch.is_tensor(data[key]):
-                if torch.all(col < data[key].shape[0]):
-                    patch[key] = data[key][col]
+            if torch.is_tensor(data[key]) and torch.all(col < data[key].shape[0]):
+                patch[key] = data[key][col]
 
         return patch
 
@@ -315,8 +303,9 @@ def tracked_matches(data_s, data_t, pair):
                        np.arange(0, len(data_s.pos))))
     table_t = dict(zip(data_t.origin_id.numpy(),
                        np.arange(0, len(data_t.pos))))
-    res = torch.tensor([[table_s[p[0]], table_t[p[1]]] for p in filtered_pair]).to(torch.long)
-    return res
+    return torch.tensor(
+        [[table_s[p[0]], table_t[p[1]]] for p in filtered_pair]
+    ).to(torch.long)
 
 
 
@@ -334,5 +323,4 @@ def fps_sampling(pair_ind, pos, num_pos_pairs, ind=0):
     ratio = float(num_pos_pairs) / len(pair_ind)
     if(ratio <= 0 or ratio >= 1):
         raise ValueError("ratio cannot have this value: {}".format(ratio))
-    index = fps(small_pos_source, batch, ratio=ratio, random_start=False)
-    return index
+    return fps(small_pos_source, batch, ratio=ratio, random_start=False)

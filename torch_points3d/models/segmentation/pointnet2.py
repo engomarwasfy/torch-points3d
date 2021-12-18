@@ -74,15 +74,9 @@ class PointNet2_D(UnetBasedModel):
         """
         assert len(data.pos.shape) == 3
         data = data.to(device)
-        if data.x is not None:
-            x = data.x.transpose(1, 2).contiguous()
-        else:
-            x = None
+        x = data.x.transpose(1, 2).contiguous() if data.x is not None else None
         self.input = Data(x=x, pos=data.pos)
-        if data.y is not None:
-            self.labels = torch.flatten(data.y).long()  # [B * N]
-        else:
-            self.labels = None
+        self.labels = torch.flatten(data.y).long() if data.y is not None else None
         self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
         if self._use_category:
             self.category = data.category
@@ -110,8 +104,11 @@ class PointNet2_D(UnetBasedModel):
             )
 
         self.data_visual = self.input
-        self.data_visual.y = torch.reshape(self.labels, data.pos.shape[0:2])
-        self.data_visual.pred = torch.max(self.output, -1)[1].reshape(data.pos.shape[0:2])
+        self.data_visual.y = torch.reshape(self.labels, data.pos.shape[:2])
+        self.data_visual.pred = torch.max(self.output, -1)[1].reshape(
+            data.pos.shape[:2]
+        )
+
         return self.output
 
     def backward(self):

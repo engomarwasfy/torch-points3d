@@ -32,8 +32,7 @@ class MiniPointNet(torch.nn.Module):
         global_feat, local_feat = self.forward(pos, batch)
         indices = batch.unsqueeze(-1).repeat((1, global_feat.shape[-1]))
         gathered_global_feat = torch.gather(global_feat, 0, indices)
-        x = torch.cat([local_feat, gathered_global_feat], -1)
-        return x
+        return torch.cat([local_feat, gathered_global_feat], -1)
 
 
 class PointNetSTN3D(BaseLinearTransformSTNkD):
@@ -109,6 +108,4 @@ class PointNetSeg(torch.nn.Module):
         else:
             feat_concat = torch.cat([x_feat_trans, 
                                     global_feature.unsqueeze(1).repeat((1, x_feat_trans.shape[1], 1))], dim=-1)
-        out = self.seg_nn(feat_concat)
-
-        return out
+        return self.seg_nn(feat_concat)

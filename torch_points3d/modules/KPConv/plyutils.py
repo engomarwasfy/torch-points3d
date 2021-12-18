@@ -108,10 +108,6 @@ def parse_mesh_header(plyfile, ext):
             if current_element == "vertex":
                 line = line.split()
                 vertex_properties.append((line[2].decode(), ext + ply_dtypes[line[1]]))
-            elif current_element == "vertex":
-                if not line.startswith("property list uchar int"):
-                    raise ValueError("Unsupported faces property : " + line)
-
     return num_points, num_faces, vertex_properties
 
 
@@ -195,10 +191,7 @@ def read_ply(filename, triangular_mesh=False):
 def header_properties(field_list, field_names):
 
     # List of lines to write
-    lines = []
-
-    # First line describing element vertex
-    lines.append("element vertex %d" % field_list[0].shape[0])
+    lines = ["element vertex %d" % field_list[0].shape[0]]
 
     # Properties lines
     i = 0
@@ -237,7 +230,12 @@ def write_ply(filename, field_list, field_names, triangular_faces=None):
     """
 
     # Format list input to the right form
-    field_list = list(field_list) if (type(field_list) == list or type(field_list) == tuple) else list((field_list,))
+    field_list = (
+        list(field_list)
+        if type(field_list) in [list, tuple]
+        else list((field_list,))
+    )
+
     for i, field in enumerate(field_list):
         if field.ndim < 2:
             field_list[i] = field.reshape(-1, 1)
@@ -265,10 +263,7 @@ def write_ply(filename, field_list, field_names, triangular_faces=None):
     with open(filename, "w") as plyfile:
 
         # First magical word
-        header = ["ply"]
-
-        # Encoding format
-        header.append("format binary_" + sys.byteorder + "_endian 1.0")
+        header = ['ply', "format binary_" + sys.byteorder + "_endian 1.0"]
 
         # Points properties description
         header.extend(header_properties(field_list, field_names))
@@ -327,13 +322,13 @@ def describe_element(name, df):
     -------
     element: list[str]
     """
-    property_formats = {"f": "float", "u": "uchar", "i": "int"}
     element = ["element " + name + " " + str(len(df))]
 
     if name == "face":
         element.append("property list uchar int points_indices")
 
     else:
+        property_formats = {"f": "float", "u": "uchar", "i": "int"}
         for i in range(len(df.columns)):
             # get first letter of dtype to infer format
             f = property_formats[str(df.dtypes[i])[0]]

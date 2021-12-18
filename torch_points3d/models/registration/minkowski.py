@@ -61,12 +61,11 @@ class BaseMinkowski(FragmentBaseModel):
             self.match = None
 
     def get_batch(self):
-        if self.match is not None:
-            batch = self.input.C[:, 0]
-            batch_target = self.input_target.C[:, 0]
-            return batch, batch_target
-        else:
+        if self.match is None:
             return None, None
+        batch = self.input.C[:, 0]
+        batch_target = self.input_target.C[:, 0]
+        return batch, batch_target
 
     def get_input(self):
         if self.match is not None:

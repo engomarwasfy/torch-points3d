@@ -110,10 +110,7 @@ class MockDatasetGeometric(MockDataset):
 class PairMockDataset(MockDataset):
     def __init__(self, feature_size=0, transform=None, num_points=100, is_pair_ind=True, batch_size=2):
         super(PairMockDataset, self).__init__(feature_size, transform, num_points, batch_size=batch_size)
-        if is_pair_ind:
-            self._pair_ind = torch.tensor([[0, 1], [1, 0]])
-        else:
-            self._pair_ind = None
+        self._pair_ind = torch.tensor([[0, 1], [1, 0]]) if is_pair_ind else None
 
     @property
     def datalist(self):
@@ -142,8 +139,10 @@ class PairMockDataset(MockDataset):
         if self._ms_transform:
             datalist_source = [self._ms_transform(d.clone()) for d in datalist_source]
             datalist_target = [self._ms_transform(d.clone()) for d in datalist_target]
-        datalist = [Pair.make_pair(datalist_source[i], datalist_target[i]) for i in range(self.batch_size)]
-        return datalist
+        return [
+            Pair.make_pair(datalist_source[i], datalist_target[i])
+            for i in range(self.batch_size)
+        ]
 
     def __getitem__(self, index):
         return DensePairBatch.from_data_list(self.datalist)

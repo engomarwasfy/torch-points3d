@@ -43,58 +43,62 @@ class Wandb:
 
     @staticmethod
     def launch(cfg, launch: bool):
-        if launch:
-            import wandb
+        if not launch:
+            return
 
-            Wandb.IS_ACTIVE = True
+        import wandb
 
-            model_config = getattr(cfg.models, cfg.model_name, None)
-            model_class = getattr(model_config, "class")
-            tested_dataset_class = getattr(cfg.data, "class")
-            otimizer_class = getattr(cfg.training.optim.optimizer, "class")
-            scheduler_class = getattr(cfg.lr_scheduler, "class")
-            tags = [
-                cfg.model_name,
-                model_class.split(".")[0],
-                tested_dataset_class,
-                otimizer_class,
-                scheduler_class,
-            ]
+        Wandb.IS_ACTIVE = True
 
-            wandb_args = {}
-            wandb_args["project"] = cfg.training.wandb.project
-            wandb_args["tags"] = tags
-            wandb_args["resume"] = "allow"
-            Wandb._set_to_wandb_args(wandb_args, cfg, "name")
-            Wandb._set_to_wandb_args(wandb_args, cfg, "entity")
-            Wandb._set_to_wandb_args(wandb_args, cfg, "notes")
-            Wandb._set_to_wandb_args(wandb_args, cfg, "config")
-            Wandb._set_to_wandb_args(wandb_args, cfg, "id")
+        model_config = getattr(cfg.models, cfg.model_name, None)
+        model_class = getattr(model_config, "class")
+        tested_dataset_class = getattr(cfg.data, "class")
+        otimizer_class = getattr(cfg.training.optim.optimizer, "class")
+        scheduler_class = getattr(cfg.lr_scheduler, "class")
+        tags = [
+            cfg.model_name,
+            model_class.split(".")[0],
+            tested_dataset_class,
+            otimizer_class,
+            scheduler_class,
+        ]
 
-            try:
-                commit_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
-                gitdiff = subprocess.check_output(["git", "diff", "--", "':!notebooks'"]).decode()
-            except:
-                commit_sha = "n/a"
-                gitdiff = ""
+        wandb_args = {
+            'project': cfg.training.wandb.project,
+            'tags': tags,
+            'resume': 'allow',
+        }
 
-            config = wandb_args.get("config", {})
-            wandb_args["config"] = {
-                **config,
-                "run_path": os.getcwd(),
-                "commit": commit_sha,
-            }
+        Wandb._set_to_wandb_args(wandb_args, cfg, "name")
+        Wandb._set_to_wandb_args(wandb_args, cfg, "entity")
+        Wandb._set_to_wandb_args(wandb_args, cfg, "notes")
+        Wandb._set_to_wandb_args(wandb_args, cfg, "config")
+        Wandb._set_to_wandb_args(wandb_args, cfg, "id")
 
-            wandb.init(**wandb_args)
-            shutil.copyfile(
-                os.path.join(os.getcwd(), ".hydra/config.yaml"), os.path.join(os.getcwd(), ".hydra/hydra-config.yaml")
-            )
-            wandb.save(os.path.join(os.getcwd(), ".hydra/hydra-config.yaml"))
-            wandb.save(os.path.join(os.getcwd(), ".hydra/overrides.yaml"))
+        try:
+            commit_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
+            gitdiff = subprocess.check_output(["git", "diff", "--", "':!notebooks'"]).decode()
+        except:
+            commit_sha = "n/a"
+            gitdiff = ""
 
-            with open("change.patch", "w") as f:
-                f.write(gitdiff)
-            wandb.save(os.path.join(os.getcwd(), "change.patch"))
+        config = wandb_args.get("config", {})
+        wandb_args["config"] = {
+            **config,
+            "run_path": os.getcwd(),
+            "commit": commit_sha,
+        }
+
+        wandb.init(**wandb_args)
+        shutil.copyfile(
+            os.path.join(os.getcwd(), ".hydra/config.yaml"), os.path.join(os.getcwd(), ".hydra/hydra-config.yaml")
+        )
+        wandb.save(os.path.join(os.getcwd(), ".hydra/hydra-config.yaml"))
+        wandb.save(os.path.join(os.getcwd(), ".hydra/overrides.yaml"))
+
+        with open("change.patch", "w") as f:
+            f.write(gitdiff)
+        wandb.save(os.path.join(os.getcwd(), "change.patch"))
 
     @staticmethod
     def add_file(file_path: str):

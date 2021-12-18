@@ -120,7 +120,7 @@ class TestBaseModel(unittest.TestCase):
         expected_contains_grads = [False, True, True, False, True, True, False, True, True, False]
         make_optimizer_steps = []
         contains_grads = []
-        for epoch in range(10):
+        for _ in range(10):
             model.forward()
 
             make_optimizer_step = model._manage_optimizer_zero_grad()  # Accumulate gradient if option is up

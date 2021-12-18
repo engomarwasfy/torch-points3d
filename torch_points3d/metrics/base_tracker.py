@@ -84,10 +84,10 @@ class BaseTracker:
 
     @staticmethod
     def _remove_stage_from_metric_keys(stage, metrics):
-        new_metrics = {}
-        for metric_name, metric_value in metrics.items():
-            new_metrics[metric_name.replace(stage + "_", "")] = metric_value
-        return new_metrics
+        return {
+            metric_name.replace(stage + "_", ""): metric_value
+            for metric_name, metric_value in metrics.items()
+        }
 
     def publish(self, step):
         """ Publishes the current metrics to wandb and tensorboard

@@ -89,13 +89,11 @@ class PatchKPConv(BackboneBasedModel):
     def forward(self, *args, **kwargs) -> Any:
 
         self.output = self.apply_nn(self.input, self.pre_computed, self.batch_idx)
-        if self.labels is None:
-            return self.output
-        else:
+        if self.labels is not None:
             output_target = self.apply_nn(self.input_target, self.pre_computed_target, self.batch_idx_target)
             self.output = torch.cat([self.output, output_target], 0)
             self.compute_loss()
-            return self.output
+        return self.output
 
     def compute_loss(self):
         self.loss = 0
@@ -245,12 +243,11 @@ class FragmentKPConv(FragmentBaseModel, UnwrappedUnetBasedModel):
         self.loss += self.loss_reg
 
     def get_batch(self):
-        if self.match is not None:
-            batch = self.input.batch
-            batch_target = self.input_target.batch
-            return batch, batch_target
-        else:
+        if self.match is None:
             return None
+        batch = self.input.batch
+        batch_target = self.input_target.batch
+        return batch, batch_target
 
     def get_input(self):
         if self.match is not None:

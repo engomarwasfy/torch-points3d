@@ -38,5 +38,4 @@ def permissive_loss(deformed_kpoints, radius):
     move outside from the radius defined for the convolution
     """
     norm_deformed_normalized = torch.norm(deformed_kpoints, p=2, dim=-1) / float(radius)
-    permissive_loss = torch.mean(norm_deformed_normalized[norm_deformed_normalized > 1.0])
-    return permissive_loss
+    return torch.mean(norm_deformed_normalized[norm_deformed_normalized > 1.0])

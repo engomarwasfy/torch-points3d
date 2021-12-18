@@ -43,10 +43,7 @@ class ResBlock(torch.nn.Module):
 
     def forward(self, x):
         out = self.block(x)
-        if self.downsample:
-            out += self.downsample(x)
-        else:
-            out += x
+        out += self.downsample(x) if self.downsample else x
         return out
 
 
@@ -80,10 +77,7 @@ class BottleneckBlock(torch.nn.Module):
 
     def forward(self, x):
         out = self.block(x)
-        if self.downsample:
-            out += self.downsample(x)
-        else:
-            out += x
+        out += self.downsample(x) if self.downsample else x
         return out
 
 
@@ -106,11 +100,7 @@ class ResNetDown(torch.nn.Module):
     ):
         block = getattr(_res_blocks, block)
         super().__init__()
-        if stride > 1:
-            conv1_output = down_conv_nn[0]
-        else:
-            conv1_output = down_conv_nn[1]
-
+        conv1_output = down_conv_nn[0] if stride > 1 else down_conv_nn[1]
         conv = getattr(snn, self.CONVOLUTION)
         self.conv_in = (
             Seq()
@@ -155,8 +145,5 @@ class ResNetUp(ResNetDown):
         )
 
     def forward(self, x, skip):
-        if skip is not None:
-            inp = snn.cat(x, skip)
-        else:
-            inp = x
+        inp = snn.cat(x, skip) if skip is not None else x
         return super().forward(inp)

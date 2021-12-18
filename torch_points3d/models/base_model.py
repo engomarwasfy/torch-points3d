@@ -195,23 +195,22 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             return False
 
     def _do_scheduler_update(self, update_scheduler_on, scheduler, epoch, batch_size):
-        if hasattr(self, update_scheduler_on):
-            update_scheduler_on = getattr(self, update_scheduler_on)
-            if update_scheduler_on is None:
-                raise Exception("The function instantiate_optimizers doesn't look like called")
-
-            num_steps = 0
-            if update_scheduler_on == SchedulerUpdateOn.ON_EPOCH.value:
-                num_steps = epoch - self._num_epochs
-            elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_BATCH.value:
-                num_steps = 1
-            elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_SAMPLE.value:
-                num_steps = batch_size
-
-            for _ in range(num_steps):
-                scheduler.step()
-        else:
+        if not hasattr(self, update_scheduler_on):
             raise Exception("The attributes {} should be defined within self".format(update_scheduler_on))
+        update_scheduler_on = getattr(self, update_scheduler_on)
+        if update_scheduler_on is None:
+            raise Exception("The function instantiate_optimizers doesn't look like called")
+
+        num_steps = 0
+        if update_scheduler_on == SchedulerUpdateOn.ON_EPOCH.value:
+            num_steps = epoch - self._num_epochs
+        elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_BATCH.value:
+            num_steps = 1
+        elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_SAMPLE.value:
+            num_steps = batch_size
+
+        for _ in range(num_steps):
+            scheduler.step()
 
     def _do_scale_loss(self):
         orig_losses = {}
@@ -260,12 +259,11 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         """Return traning losses / errors. train.py will print out these errors on console"""
         errors_ret = OrderedDict()
         for name in self.loss_names:
-            if isinstance(name, str):
-                if hasattr(self, name):
-                    try:
-                        errors_ret[name] = float(getattr(self, name))
-                    except:
-                        errors_ret[name] = None
+            if isinstance(name, str) and hasattr(self, name):
+                try:
+                    errors_ret[name] = float(getattr(self, name))
+                except:
+                    errors_ret[name] = None
         return errors_ret
 
     def instantiate_optimizers(self, config, cuda_enabled=False):
@@ -474,23 +472,29 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         and verifies that the passed data object contains all required members.
         If something is missing it raises a KeyError exception.
         """
-        missing_keys = []
         required_attributes = self.__REQUIRED_DATA__
         if not forward_only:
             required_attributes += self.__REQUIRED_LABELS__
-        for attr in required_attributes:
-            if not hasattr(data, attr) or data[attr] is None:
-                missing_keys.append(attr)
+        missing_keys = [
+            attr
+            for attr in required_attributes
+            if not hasattr(data, attr) or data[attr] is None
+        ]
+
         if len(missing_keys):
             raise KeyError(
                 "Missing attributes in your data object: {}. The model will fail to forward.".format(missing_keys)
             )
 
     def print_transforms(self):
-        message = ""
-        for attr in self.__dict__:
-            if "transform" in attr:
-                message += "{}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, getattr(self, attr))
+        message = "".join(
+            "{}{} {}= {}\n".format(
+                COLORS.IPurple, attr, COLORS.END_NO_TOKEN, getattr(self, attr)
+            )
+            for attr in self.__dict__
+            if "transform" in attr
+        )
+
         print(message)
 
 

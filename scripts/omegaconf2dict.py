@@ -12,8 +12,7 @@ def parse_args():
     parser.add_argument('-f', help='input of the .pt file', dest="file", type=str)
     parser.add_argument('--old', help='input of the .pt file', dest="old", type=str)
     parser.add_argument('-o', help='output of the .pt file', dest="out", type=str)
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def convert(dico, exclude_keys=["models", "optimizer"], depth=0, verbose=True):

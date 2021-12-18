@@ -53,11 +53,7 @@ def get_dataset(conv_type, task):
     num_points = 1024
     features = 2
     batch_size = 2
-    if task == "object_detection":
-        include_box = True
-    else:
-        include_box = False
-
+    include_box = task == "object_detection"
     if conv_type.lower() == "dense":
         num_points = 2050
         batch_size = 1
@@ -100,10 +96,7 @@ def get_dataset(conv_type, task):
 
 def has_zero_grad(model_name):
     has_zero_grad = ["PointGroup"]
-    for zg in has_zero_grad:
-        if zg.lower() in model_name.lower():
-            return True
-    return False
+    return any(zg.lower() in model_name.lower() for zg in has_zero_grad)
 
 
 class TestModels(unittest.TestCase):
@@ -129,10 +122,9 @@ class TestModels(unittest.TestCase):
                     for h in [1, 2, 3, 4]:
                         for s in ["", "_unshared"]:
                             forward_failing += ["MS_SVCONV_B{}cm_X2_{}head{}".format(cm, h, s)]
-            for failing in forward_failing:
-                if failing.lower() in model_name.lower():
-                    return True
-            return False
+            return any(
+                failing.lower() in model_name.lower() for failing in forward_failing
+            )
 
         def is_torch_sparse_backend(model_name):
             torchsparse_backend = [
@@ -143,10 +135,10 @@ class TestModels(unittest.TestCase):
                 for h in [1, 2, 3, 4]:
                     for s in ["", "_unshared"]:
                         torchsparse_backend += ["MS_SVCONV_B{}cm_X2_{}head{}".format(cm, h, s)]
-            for backend in torchsparse_backend:
-                if backend.lower() in model_name.lower():
-                    return True
-            return False
+            return any(
+                backend.lower() in model_name.lower()
+                for backend in torchsparse_backend
+            )
 
         for type_file in self.model_type_files:
             associated_task = os.path.normpath(type_file).split(os.path.sep)[-2]

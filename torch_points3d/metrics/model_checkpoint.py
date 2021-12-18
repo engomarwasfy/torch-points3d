@@ -92,53 +92,55 @@ class Checkpoint:
         return not self._filled
 
     def load_optim_sched(self, model, load_state=True):
-        if not self.is_empty:
-            # initialize optimizer
-            optimizer_config = self.optimizer
-            optimizer_cls = getattr(torch.optim, optimizer_config[0])
-            optimizer_params = OmegaConf.create(self.run_config).training.optim.optimizer.params
-            model.optimizer = optimizer_cls(model.parameters(), **optimizer_params)
+        if self.is_empty:
+            return
+        # initialize optimizer
+        optimizer_config = self.optimizer
+        optimizer_cls = getattr(torch.optim, optimizer_config[0])
+        optimizer_params = OmegaConf.create(self.run_config).training.optim.optimizer.params
+        model.optimizer = optimizer_cls(model.parameters(), **optimizer_params)
 
-            # initialize & load schedulersr
-            schedulers_out = {}
-            schedulers_config = self.schedulers
-            for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
-                if scheduler_type == "lr_scheduler":
-                    optimizer = model.optimizer
-                    scheduler = instantiate_scheduler(optimizer, OmegaConf.create(scheduler_opt))
-                    if load_state:
-                        scheduler.load_state_dict(scheduler_state)
-                    schedulers_out["lr_scheduler"] = scheduler
+        # initialize & load schedulersr
+        schedulers_out = {}
+        schedulers_config = self.schedulers
+        for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
+            if scheduler_type == "lr_scheduler":
+                optimizer = model.optimizer
+                scheduler = instantiate_scheduler(optimizer, OmegaConf.create(scheduler_opt))
+                if load_state:
+                    scheduler.load_state_dict(scheduler_state)
+                schedulers_out["lr_scheduler"] = scheduler
 
-                elif scheduler_type == "bn_scheduler":
-                    scheduler = instantiate_bn_scheduler(model, OmegaConf.create(scheduler_opt))
-                    if load_state:
-                        scheduler.load_state_dict(scheduler_state)
-                    schedulers_out["bn_scheduler"] = scheduler
+            elif scheduler_type == "bn_scheduler":
+                scheduler = instantiate_bn_scheduler(model, OmegaConf.create(scheduler_opt))
+                if load_state:
+                    scheduler.load_state_dict(scheduler_state)
+                schedulers_out["bn_scheduler"] = scheduler
 
-            # load optimizer
-            model.schedulers = schedulers_out
-            if load_state:
-                model.optimizer.load_state_dict(optimizer_config[1])
+        # load optimizer
+        model.schedulers = schedulers_out
+        if load_state:
+            model.optimizer.load_state_dict(optimizer_config[1])
 
     def get_state_dict(self, weight_name):
-        if not self.is_empty:
+        if self.is_empty:
+            return
+        try:
+            models = self.models
+            keys = [key.replace("best_", "") for key in models.keys()]
+            log.info("Available weights : {}".format(keys))
             try:
-                models = self.models
-                keys = [key.replace("best_", "") for key in models.keys()]
-                log.info("Available weights : {}".format(keys))
-                try:
-                    key_name = "best_{}".format(weight_name)
-                    model = models[key_name]
-                    log.info("Model loaded from {}:{}.".format(self._check_path, key_name))
-                    return model
-                except:
-                    key_name = Checkpoint._LATEST
-                    model = models[Checkpoint._LATEST]
-                    log.info("Model loaded from {}:{}".format(self._check_path, key_name))
-                    return model
+                key_name = "best_{}".format(weight_name)
+                model = models[key_name]
+                log.info("Model loaded from {}:{}.".format(self._check_path, key_name))
+                return model
             except:
-                raise Exception("This weight name isn't within the checkpoint ")
+                key_name = Checkpoint._LATEST
+                model = models[Checkpoint._LATEST]
+                log.info("Model loaded from {}:{}".format(self._check_path, key_name))
+                return model
+        except:
+            raise Exception("This weight name isn't within the checkpoint ")
 
 
 class ModelCheckpoint(object):
@@ -169,17 +171,16 @@ class ModelCheckpoint(object):
         self._selection_stage = selection_stage
 
     def create_model(self, dataset, weight_name=Checkpoint._LATEST):
-        if not self.is_empty:
-            run_config = copy.deepcopy(self._checkpoint.run_config)
-            model = instantiate_model(OmegaConf.create(run_config), dataset)
-            if hasattr(self._checkpoint, "model_props"):
-                for k, v in self._checkpoint.model_props.items():
-                    setattr(model, k, v)
-                delattr(self._checkpoint, "model_props")
-            self._initialize_model(model, weight_name)
-            return model
-        else:
+        if self.is_empty:
             raise ValueError("Checkpoint is empty")
+        run_config = copy.deepcopy(self._checkpoint.run_config)
+        model = instantiate_model(OmegaConf.create(run_config), dataset)
+        if hasattr(self._checkpoint, "model_props"):
+            for k, v in self._checkpoint.model_props.items():
+                setattr(model, k, v)
+            delattr(self._checkpoint, "model_props")
+        self._initialize_model(model, weight_name)
+        return model
 
     @property
     def start_epoch(self):
@@ -254,47 +255,44 @@ class ModelCheckpoint(object):
         stats = self._checkpoint.stats
         state_dict = copy.deepcopy(model.state_dict())
 
-        current_stat = {}
-        current_stat["epoch"] = epoch
-
+        current_stat = {'epoch': epoch}
         models_to_save = self._checkpoint.models
         if stage not in stats:
             stats[stage] = []
 
         if stage == "train":
             models_to_save[Checkpoint._LATEST] = state_dict
-        else:
-            if len(stats[stage]) > 0:
-                latest_stats = stats[stage][-1]
+        elif len(stats[stage]) > 0:
+            latest_stats = stats[stage][-1]
 
-                msg = ""
-                improved_metric = 0
+            msg = ""
+            improved_metric = 0
 
-                for metric_name, current_metric_value in metrics.items():
-                    current_stat[metric_name] = current_metric_value
+            for metric_name, current_metric_value in metrics.items():
+                current_stat[metric_name] = current_metric_value
 
-                    metric_func = self.find_func_from_metric_name(metric_name, metric_func_dict)
-                    best_metric_from_stats = latest_stats.get("best_{}".format(metric_name), current_metric_value)
-                    best_value = metric_func(best_metric_from_stats, current_metric_value)
-                    current_stat["best_{}".format(metric_name)] = best_value
+                metric_func = self.find_func_from_metric_name(metric_name, metric_func_dict)
+                best_metric_from_stats = latest_stats.get("best_{}".format(metric_name), current_metric_value)
+                best_value = metric_func(best_metric_from_stats, current_metric_value)
+                current_stat["best_{}".format(metric_name)] = best_value
 
-                    # This new value seems to be better under metric_func
-                    if (self._selection_stage == stage) and (
-                        current_metric_value == best_value
-                    ):  # Update the model weights
-                        models_to_save["best_{}".format(metric_name)] = state_dict
-
-                        msg += "{}: {} -> {}, ".format(metric_name, best_metric_from_stats, best_value)
-                        improved_metric += 1
-
-                if improved_metric > 0:
-                    colored_print(COLORS.VAL_COLOR, msg[:-2])
-            else:
-                # stats[stage] is empty.
-                for metric_name, metric_value in metrics.items():
-                    current_stat[metric_name] = metric_value
-                    current_stat["best_{}".format(metric_name)] = metric_value
+                # This new value seems to be better under metric_func
+                if (self._selection_stage == stage) and (
+                    current_metric_value == best_value
+                ):  # Update the model weights
                     models_to_save["best_{}".format(metric_name)] = state_dict
+
+                    msg += "{}: {} -> {}, ".format(metric_name, best_metric_from_stats, best_value)
+                    improved_metric += 1
+
+            if improved_metric > 0:
+                colored_print(COLORS.VAL_COLOR, msg[:-2])
+        else:
+            # stats[stage] is empty.
+            for metric_name, metric_value in metrics.items():
+                current_stat[metric_name] = metric_value
+                current_stat["best_{}".format(metric_name)] = metric_value
+                models_to_save["best_{}".format(metric_name)] = state_dict
 
         kwargs["model_props"] = {
             "num_epochs": model.num_epochs,  # type: ignore

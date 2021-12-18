@@ -45,7 +45,7 @@ def asl_to_pcd(folder_name):
                     if line != 0:
                         points.append([float(row[1]),float(row[2]),float(row[3])])
                     else:
-                        line=line+1
+                        line += 1
             with open(out_filename, "w") as out_file:
                 out_file.write("# .PCD v.7 - Point Cloud Data file format\nVERSION 0.7\nFIELDS x y z\nSIZE 4 4 4\nTYPE F F F\nCOUNT 1 1 1\nWIDTH "+str(len(points))+"\nHEIGHT 1\nVIEWPOINT 0 0 0 1 0 0 0\nPOINTS "+str(len(points))+"\nDATA ascii")
                 for point in points:

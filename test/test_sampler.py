@@ -48,10 +48,7 @@ class TestNeighboorhoodSearch(unittest.TestCase):
         y = torch.Tensor([[-1, 0], [1, 0]])
         batch_y = torch.tensor([0, 0])
         nei_finder = MultiscaleRadiusNeighbourFinder([1.1, 10], 4)
-        multiscale = []
-        for i in range(2):
-            multiscale.append(nei_finder(x, y, batch_x, batch_y, i))
-
+        multiscale = [nei_finder(x, y, batch_x, batch_y, i) for i in range(2)]
         self.assertEqual(len(multiscale), 2)
         self.assertEqual(multiscale[0][1, :].shape[0], 4)
         self.assertEqual(multiscale[1][1, :].shape[0], 8)
@@ -62,10 +59,7 @@ class TestNeighboorhoodSearch(unittest.TestCase):
         y = torch.Tensor([[-1, 0], [1, 0]])
         batch_y = torch.tensor([0, 0])
         nei_finder = MultiscaleRadiusNeighbourFinder(10, [3, 4])
-        multiscale = []
-        for i in range(2):
-            multiscale.append(nei_finder(x, y, batch_x, batch_y, i))
-
+        multiscale = [nei_finder(x, y, batch_x, batch_y, i) for i in range(2)]
         self.assertEqual(len(multiscale), 2)
         self.assertEqual(multiscale[0][1, :].shape[0], 6)
         self.assertEqual(multiscale[1][1, :].shape[0], 8)
@@ -77,10 +71,7 @@ class TestNeighboorhoodSearch(unittest.TestCase):
         batch_y = torch.tensor([0, 0])
 
         nei_finder = MultiscaleRadiusNeighbourFinder([1.1, 10], [3, 4])
-        multiscale = []
-        for i in range(2):
-            multiscale.append(nei_finder(x, y, batch_x, batch_y, i))
-
+        multiscale = [nei_finder(x, y, batch_x, batch_y, i) for i in range(2)]
         self.assertEqual(len(multiscale), 2)
         self.assertEqual(multiscale[0][1, :].shape[0], 4)
         self.assertEqual(multiscale[1][1, :].shape[0], 8)

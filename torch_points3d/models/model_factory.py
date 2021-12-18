@@ -41,5 +41,4 @@ def instantiate_model(config, dataset) -> BaseModel:
             "In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase."
             % (model_module, class_name)
         )
-    model = model_cls(model_config, "dummy", dataset, modellib)
-    return model
+    return model_cls(model_config, "dummy", dataset, modellib)

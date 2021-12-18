@@ -119,7 +119,7 @@ class BaseSparseConv3d(UnwrappedUnetBasedModel):
 
     def weight_initialization(self):
         for m in self.modules():
-            if isinstance(m, sp3d.nn.Conv3d) or isinstance(m, sp3d.nn.Conv3dTranspose):
+            if isinstance(m, (sp3d.nn.Conv3d, sp3d.nn.Conv3dTranspose)):
                 torch.nn.init.kaiming_normal_(m.kernel, mode="fan_out", nonlinearity="relu")
 
             if isinstance(m, sp3d.nn.BatchNorm):
@@ -135,10 +135,7 @@ class BaseSparseConv3d(UnwrappedUnetBasedModel):
             a dictionary that contains the data itself and its metadata information.
         """
         self.input = sp3d.nn.SparseTensor(data.x, data.coords, data.batch, self.device)
-        if data.pos is not None:
-            self.xyz = data.pos
-        else:
-            self.xyz = data.coords
+        self.xyz = data.pos if data.pos is not None else data.coords
 
 class SparseConv3dEncoder(BaseSparseConv3d):
     def forward(self, data, *args, **kwargs):

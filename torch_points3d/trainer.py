@@ -159,21 +159,25 @@ class Trainer:
                 self._test_epoch(epoch, "test")
 
         # Single test evaluation in resume case
-        if self._checkpoint.start_epoch > self._cfg.training.epochs:
-            if self._dataset.has_test_loaders:
-                self._test_epoch(epoch, "test")
+        if (
+            self._checkpoint.start_epoch > self._cfg.training.epochs
+            and self._dataset.has_test_loaders
+        ):
+            self._test_epoch(epoch, "test")
 
     def eval(self, stage_name=""):
         self._is_training = False
 
         epoch = self._checkpoint.start_epoch
-        if self._dataset.has_val_loader:
-            if not stage_name or stage_name == "val":
-                self._test_epoch(epoch, "val")
+        if self._dataset.has_val_loader and (
+            not stage_name or stage_name == "val"
+        ):
+            self._test_epoch(epoch, "val")
 
-        if self._dataset.has_test_loaders:
-            if not stage_name or stage_name == "test":
-                self._test_epoch(epoch, "test")
+        if self._dataset.has_test_loaders and (
+            not stage_name or stage_name == "test"
+        ):
+            self._test_epoch(epoch, "test")
 
     def _finalize_epoch(self, epoch):
         self._tracker.finalise(**self.tracker_options)
@@ -226,9 +230,8 @@ class Trainer:
                     if self.early_break:
                         break
 
-                    if self.profiling:
-                        if i > self.num_batches:
-                            return 0
+                    if self.profiling and i > self.num_batches:
+                        return 0
 
         self._finalize_epoch(epoch)
 
@@ -253,7 +256,7 @@ class Trainer:
             ):  # No label, no submission -> do nothing
                 log.warning("No forward will be run on dataset %s." % stage_name)
                 continue
-            
+
             with self.profiler_profile(epoch) as prof:
                 for i in range(voting_runs):
                     with Ctq(loader) as tq_loader:
@@ -277,9 +280,8 @@ class Trainer:
                             if self.early_break:
                                 break
 
-                            if self.profiling:
-                                if i > self.num_batches:
-                                    return 0
+                            if self.profiling and i > self.num_batches:
+                                return 0
 
             self._finalize_epoch(epoch)
             self._tracker.print_summary()
@@ -336,9 +338,10 @@ class Trainer:
 
     @property
     def pytorch_profiler_log(self):
-        if self.tensorboard_log:
-            if getattr(self._cfg.training.tensorboard, "pytorch_profiler", False):
-                return getattr(self._cfg.training.tensorboard.pytorch_profiler, "log", False)
+        if self.tensorboard_log and getattr(
+            self._cfg.training.tensorboard, "pytorch_profiler", False
+        ):
+            return getattr(self._cfg.training.tensorboard.pytorch_profiler, "log", False)
         return False
 
     #pyTorch Profiler

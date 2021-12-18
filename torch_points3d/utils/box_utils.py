@@ -105,8 +105,7 @@ def box3d_iou(corners1, corners2):
     inter_vol = inter_area * max(0.0, z_max - z_min)
     vol1 = box3d_vol(corners1)
     vol2 = box3d_vol(corners2)
-    iou = inter_vol / (vol1 + vol2 - inter_vol)
-    return iou
+    return inter_vol / (vol1 + vol2 - inter_vol)
 
 
 def box3d_vol(corners):
@@ -125,11 +124,10 @@ def intersection_area(p1, p2):
     """
     assert len(p1[0]) == 2 and len(p2[0]) == 2
     inter_p = polygon_clip(p1, p2)
-    if inter_p is not None:
-        hull_inter = ConvexHull(inter_p)
-        return hull_inter.volume
-    else:
+    if inter_p is None:
         return 0.0
+    hull_inter = ConvexHull(inter_p)
+    return hull_inter.volume
 
 
 def polygon_clip(subjectPolygon, clipPolygon):
@@ -194,19 +192,15 @@ def intersection_area_noscipy(p1, p2):
     """
     assert len(p1[0]) == 2 and len(p2[0]) == 2
     inter_p = polygon_clip(p1, p2)
-    if inter_p is not None:
-        hull_inter = np.asarray(convex_hull_graham(inter_p))
-        area = polygon_area(hull_inter[:, 0], hull_inter[:, 1])
-        return area
-    else:
+    if inter_p is None:
         return 0.0
+    hull_inter = np.asarray(convex_hull_graham(inter_p))
+    return polygon_area(hull_inter[:, 0], hull_inter[:, 1])
 
 
 # Function to know if we have a CCW turn
 def RightTurn(p1, p2, p3):
-    if (p3[1] - p1[1]) * (p2[0] - p1[0]) >= (p2[1] - p1[1]) * (p3[0] - p1[0]):
-        return False
-    return True
+    return (p3[1] - p1[1]) * (p2[0] - p1[0]) < (p2[1] - p1[1]) * (p3[0] - p1[0])
 
 
 # Main algorithm:
@@ -226,8 +220,7 @@ def convex_hull_graham(P):
             del L_lower[-2]
     del L_lower[0]
     del L_lower[-1]
-    L = L_upper + L_lower  # Build the full hull
-    return L
+    return L_upper + L_lower
 
 
 def polygon_area(x, y):

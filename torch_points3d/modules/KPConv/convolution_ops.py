@@ -101,10 +101,7 @@ def KPConv_ops(
     weighted_features = weighted_features.permute(1, 0, 2)
     kernel_outputs = torch.matmul(weighted_features, K_values)
 
-    # Convolution sum to get [n_points, out_fdim]
-    output_features = torch.sum(kernel_outputs, dim=0)
-
-    return output_features
+    return torch.sum(kernel_outputs, dim=0)
 
 
 def KPConv_deform_ops(

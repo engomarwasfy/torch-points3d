@@ -305,17 +305,17 @@ class Base3DMatch(Dataset):
                 if(self.pre_transform_patch is not None):
                     data_source = self.pre_transform_patch(data_source)
                     data_target = self.pre_transform_patch(data_target)
-                if(self.pre_filter is not None):
-                    if(self.pre_filter(data_source) and self.pre_filter(data_target)):
+                if self.pre_filter is None:
+                    torch.save(data_source,
+                               osp.join(out_dir,
+                                        'patches_source{:06d}.pt'.format(idx)))
+                    torch.save(data_target,
+                               osp.join(out_dir,
+                                        'patches_target{:06d}.pt'.format(idx)))
+                    idx += 1
 
-                        torch.save(data_source,
-                                   osp.join(out_dir,
-                                            'patches_source{:06d}.pt'.format(idx)))
-                        torch.save(data_target,
-                                   osp.join(out_dir,
-                                            'patches_target{:06d}.pt'.format(idx)))
-                        idx += 1
-                else:
+                elif (self.pre_filter(data_source) and self.pre_filter(data_target)):
+
                     torch.save(data_source,
                                osp.join(out_dir,
                                         'patches_source{:06d}.pt'.format(idx)))
@@ -345,5 +345,4 @@ class Base3DMatch(Dataset):
         tuple, a  LongTensor or a BoolTensor, will return a subset of the
         dataset at the specified indices."""
 
-        data = self.get(idx)
-        return data
+        return self.get(idx)

@@ -23,9 +23,8 @@ def test_hasgrad(model, strict=False, verbose=False):
                     print("Param with name %s has 0 grad" % name)
                 count += 1
     if count > 0:
-        msg = "Model has %.2f%% of parameters with 0 gradient" % (count / (1.0 * total_params))
-        if strict:
-            raise ValueError(msg)
-        else:
+        if not strict:
             return count / (1.0 * total_params)
+        msg = "Model has %.2f%% of parameters with 0 gradient" % (count / (1.0 * total_params))
+        raise ValueError(msg)
     return 1

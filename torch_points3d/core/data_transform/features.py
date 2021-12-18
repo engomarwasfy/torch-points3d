@@ -41,9 +41,13 @@ class Random3AxisRotation(object):
 
     def __init__(self, apply_rotation: bool = True, rot_x: float = None, rot_y: float = None, rot_z: float = None):
         self._apply_rotation = apply_rotation
-        if apply_rotation:
-            if (rot_x is None) and (rot_y is None) and (rot_z is None):
-                raise Exception("At least one rot_ should be defined")
+        if (
+            apply_rotation
+            and (rot_x is None)
+            and (rot_y is None)
+            and (rot_z is None)
+        ):
+            raise Exception("At least one rot_ should be defined")
 
         self._rot_x = np.abs(rot_x) if rot_x else 0
         self._rot_y = np.abs(rot_y) if rot_y else 0
@@ -178,9 +182,11 @@ class AddFeatsByKeys(object):
         return data
 
     def __repr__(self):
-        msg = ""
-        for f, a in zip(self._feat_names, self._list_add_to_x):
-            msg += "{}={}, ".format(f, a)
+        msg = "".join(
+            "{}={}, ".format(f, a)
+            for f, a in zip(self._feat_names, self._list_add_to_x)
+        )
+
         return "{}({})".format(self.__class__.__name__, msg[:-2])
 
 
@@ -228,18 +234,17 @@ class AddFeatByKey(object):
                     feat = feat.unsqueeze(-1)
                 data.x = feat
             else:
-                if x.shape[0] == feat.shape[0]:
-                    if x.dim() == 1:
-                        x = x.unsqueeze(-1)
-                    if feat.dim() == 1:
-                        feat = feat.unsqueeze(-1)
-                    data.x = torch.cat([x, feat], dim=-1)
-                else:
+                if x.shape[0] != feat.shape[0]:
                     raise Exception(
                         "The tensor x and {} can't be concatenated, x: {}, feat: {}".format(
                             self._feat_name, x.pos.shape[0], feat.pos.shape[0]
                         )
                     )
+                if x.dim() == 1:
+                    x = x.unsqueeze(-1)
+                if feat.dim() == 1:
+                    feat = feat.unsqueeze(-1)
+                data.x = torch.cat([x, feat], dim=-1)
         return data
 
     def __repr__(self):
@@ -277,10 +282,7 @@ class NormalFeature(object):
             raise NotImplementedError("TODO: Implement normal computation")
 
         norm = data.norm
-        if data.x is None:
-            data.x = norm
-        else:
-            data.x = torch.cat([data.x, norm], -1)
+        data.x = norm if data.x is None else torch.cat([data.x, norm], -1)
         return data
 
 

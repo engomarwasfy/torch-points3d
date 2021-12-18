@@ -83,7 +83,7 @@ class SemanticKitti(Dataset):
 
     @property
     def processed_file_names(self):
-        return [s for s in self.AVAILABLE_SPLITS[:-1]]
+        return list(self.AVAILABLE_SPLITS[:-1])
 
     def _load_paths(self, seqs):
         scan_paths = []
@@ -96,9 +96,9 @@ class SemanticKitti(Dataset):
                 sorted(glob(os.path.join(self.raw_paths[0], "{0:02d}".format(int(seq)), "labels", "*.label")))
             )
 
-        if len(label_path) == 0:
+        if not label_path:
             label_path = [None for i in range(len(scan_paths))]
-        if len(label_path) > 0 and len(scan_paths) != len(label_path):
+        if label_path and len(scan_paths) != len(label_path):
             raise ValueError((f"number of scans {len(scan_paths)} not equal to number of labels {len(label_path)}"))
 
         return scan_paths, label_path
@@ -211,7 +211,7 @@ class SemanticKittiDataset(BaseDataset):
 
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
-        process_workers: int = dataset_opt.process_workers if dataset_opt.process_workers else 0
+        process_workers: int = dataset_opt.process_workers or 0
         self.train_dataset = SemanticKitti(
             self._data_path,
             split="train",

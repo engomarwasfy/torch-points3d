@@ -43,15 +43,15 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
 
         if x is not None:
             grouped_features = tp.grouping_operation(x, idx)
-            if self.use_xyz:
-                new_features = torch.cat([grouped_pos, grouped_features], dim=1)  # (B, C + 3, npoint, nsample)
-            else:
-                new_features = grouped_features
+            return (
+                torch.cat([grouped_pos, grouped_features], dim=1)
+                if self.use_xyz
+                else grouped_features
+            )
+
         else:
             assert self.use_xyz, "Cannot have not features and not use xyz as a feature!"
-            new_features = grouped_pos
-
-        return new_features
+            return grouped_pos
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
         """ Implements a Dense convolution where radius_idx represents

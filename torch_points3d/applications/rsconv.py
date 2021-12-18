@@ -101,10 +101,7 @@ class RSConvBase(UnwrappedUnetBasedModel):
         """
         assert len(data.pos.shape) == 3
         data = data.to(self.device)
-        if data.x is not None:
-            data.x = data.x.transpose(1, 2).contiguous()
-        else:
-            data.x = None
+        data.x = data.x.transpose(1, 2).contiguous() if data.x is not None else None
         self.input = data
 
 
@@ -198,10 +195,7 @@ class RSConvUnet(RSConvBase):
             [data.x, data_inner.x.repeat(1, 1, data.x.shape[-1]), data_inner_2.x.repeat(1, 1, data.x.shape[-1])], dim=1
         )
 
-        if self.has_mlp_head:
-            data.x = self.mlp(last_feature)
-        else:
-            data.x = last_feature
+        data.x = self.mlp(last_feature) if self.has_mlp_head else last_feature
         for key, value in sampling_ids.items():
             setattr(data, key, value)
         return data

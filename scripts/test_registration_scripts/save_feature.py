@@ -36,10 +36,7 @@ def save(out_path, scene_name, pc_name, data, feature):
 
     kp = None
     # it must contain keypoints
-    if hasattr(data, "keypoints"):
-        kp = data.keypoints
-    else:
-        kp = None
+    kp = data.keypoints if hasattr(data, "keypoints") else None
     out_dir = osp.join(out_path, scene_name)
     if not osp.exists(out_dir):
         os.makedirs(out_dir)

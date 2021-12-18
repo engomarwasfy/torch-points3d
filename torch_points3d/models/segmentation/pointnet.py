@@ -32,10 +32,7 @@ class PointNet(BaseModel):
             self.input_features = torch.cat([data.pos, data.x], axis=-1)
         else:
             self.input_features = data.pos
-        if data.y is not None:
-            self.labels = data.y
-        else:
-            self.labels = None
+        self.labels = data.y if data.y is not None else None
         if not hasattr(data, "batch"):
             self.batch_idx = torch.zeros(self.labels.shape[0]).long()
         else:

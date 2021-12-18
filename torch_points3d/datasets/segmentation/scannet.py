@@ -176,8 +176,6 @@ def download_file(url, out_file):
         urllib.request.urlretrieve(url, out_file_tmp)
         # urllib.urlretrieve(url, out_file_tmp)
         os.rename(out_file_tmp, out_file)
-    else:
-        pass
         # log.warning("WARNING Skipping download of existing file " + out_file)
 
 
@@ -229,7 +227,7 @@ def represents_int(s):
 
 def read_label_mapping(filename, label_from="raw_category", label_to="nyu40id"):
     assert os.path.isfile(filename)
-    mapping = dict()
+    mapping = {}
     with open(filename) as csvfile:
         reader = csv.DictReader(csvfile, delimiter="\t")
         for row in reader:
@@ -571,10 +569,12 @@ class Scannet(InMemoryDataset):
                 if file_type not in FILETYPES:
                     log.error("ERROR: Invalid file type: " + file_type)
                     return
-            file_types_test = []
-            for file_type in file_types:
-                if file_type in FILETYPES_TEST:
-                    file_types_test.append(file_type)
+            file_types_test = [
+                file_type
+                for file_type in file_types
+                if file_type in FILETYPES_TEST
+            ]
+
         download_label_map(self.raw_dir)
         log.info("WARNING: You are downloading all ScanNet " + RELEASE_NAME + " scans of type " + file_types[0])
         log.info(
@@ -618,8 +618,7 @@ class Scannet(InMemoryDataset):
         mesh_file = osp.join(scannet_dir, scan_name, scan_name + "_vh_clean_2.ply")
         mesh_vertices = read_mesh_vertices_rgb(mesh_file)
 
-        data = {}
-        data["pos"] = torch.from_numpy(mesh_vertices[:, :3])
+        data = {'pos': torch.from_numpy(mesh_vertices[:, :3])}
         data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:])
         if normalize_rgb:
             data["rgb"] /= 255.0
@@ -656,16 +655,14 @@ class Scannet(InMemoryDataset):
 
         # Subsample
         N = mesh_vertices.shape[0]
-        if max_num_point:
-            if N > max_num_point:
-                choices = np.random.choice(N, max_num_point, replace=False)
-                mesh_vertices = mesh_vertices[choices, :]
-                semantic_labels = semantic_labels[choices]
-                instance_labels = instance_labels[choices]
+        if max_num_point and N > max_num_point:
+            choices = np.random.choice(N, max_num_point, replace=False)
+            mesh_vertices = mesh_vertices[choices, :]
+            semantic_labels = semantic_labels[choices]
+            instance_labels = instance_labels[choices]
 
         # Build data container
-        data = {}
-        data["pos"] = torch.from_numpy(mesh_vertices[:, :3])
+        data = {'pos': torch.from_numpy(mesh_vertices[:, :3])}
         data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:])
         if normalize_rgb:
             data["rgb"] /= 255.0
@@ -682,12 +679,10 @@ class Scannet(InMemoryDataset):
         split_files = ["scannetv2_{}.txt".format(s) for s in Scannet.SPLITS]
         self.scan_names = []
         for sf in split_files:
-            f = open(osp.join(metadata_path, sf))
-            self.scan_names.append(sorted([line.rstrip() for line in f]))
-            f.close()
-
+            with open(osp.join(metadata_path, sf)) as f:
+                self.scan_names.append(sorted([line.rstrip() for line in f]))
         for idx_split, split in enumerate(Scannet.SPLITS):
-            idx_mapping = {idx: scan_name for idx, scan_name in enumerate(self.scan_names[idx_split])}
+            idx_mapping = dict(enumerate(self.scan_names[idx_split]))
             setattr(self, "MAPPING_IDX_TO_SCAN_{}_NAMES".format(split.upper()), idx_mapping)
 
     @staticmethod

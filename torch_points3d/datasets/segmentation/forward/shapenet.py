@@ -47,10 +47,7 @@ class _ForwardShapenet(torch.utils.data.Dataset):
         raw = read_txt_array(filename)
         pos = raw[:, :3]
         x = raw[:, 3:6]
-        if raw.shape[1] == 7:
-            y = raw[:, 6].type(torch.long)
-        else:
-            y = None
+        y = raw[:, 6].type(torch.long) if raw.shape[1] == 7 else None
         return Data(pos=pos, x=x, y=y)
 
     def get_raw(self, index):
@@ -162,10 +159,7 @@ class ForwardShapenetDataset(BaseDataset):
 
     @property
     def class_to_segments(self):
-        classes_to_segment = {}
-        for key in self._train_categories:
-            classes_to_segment[key] = ShapeNet.seg_classes[key]
-        return classes_to_segment
+        return {key: ShapeNet.seg_classes[key] for key in self._train_categories}
 
     @property
     def num_classes(self):

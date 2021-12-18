@@ -14,7 +14,7 @@ class BaseModule(nn.Module):
         It is useful for debugging and reproducibility.
         """
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
-        self._nb_params = sum([np.prod(p.size()) for p in model_parameters])
+        self._nb_params = sum(np.prod(p.size()) for p in model_parameters)
         return self._nb_params
 
 

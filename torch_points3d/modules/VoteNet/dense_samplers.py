@@ -56,6 +56,9 @@ class FPSSamplerToDense(BaseSampler):
     def sample(self, data, num_batches, conv_type):
         from torch_geometric.nn import fps
 
+        x = []
+        pos = []
+        idx_out = []
         if conv_type == "DENSE":
             assert (
                 self._num_to_sample <= data.pos.shape[1]
@@ -63,9 +66,6 @@ class FPSSamplerToDense(BaseSampler):
                 self._num_to_sample, data.pos.shape[1]
             )
             batch = torch.zeros(data.pos.shape[1]).to(data.pos.device).long()
-            idx_out = []
-            pos = []
-            x = []
             for i in range(num_batches):
                 idx = fps(data.pos[i], batch, ratio=self._get_ratio_to_sample(data.pos.shape[1]))
                 idx_out.append(idx)
@@ -74,9 +74,6 @@ class FPSSamplerToDense(BaseSampler):
             x = torch.gather(data.x, 2, idx_out.unsqueeze(1).repeat(1, data.x.shape[1], 1))
             return Data(pos=pos, x=x), idx_out
         else:
-            pos = []
-            x = []
-            idx_out = []
             num_points = 0
             for batch_idx in range(num_batches):
                 batch_mask = data.batch == batch_idx
@@ -86,17 +83,14 @@ class FPSSamplerToDense(BaseSampler):
                     pos.append(pos_masked)
                     x.append(x_masked)
                     idx = torch.arange(0, pos_masked.shape[0]).to(pos_masked.device)
-                    idx_out.append(idx + num_points)
-                    num_points += pos_masked.shape[0]
                 else:
                     batch = torch.zeros(pos_masked.shape[0]).to(pos_masked).long()
                     idx = fps(pos_masked, batch, ratio=self._get_ratio_to_sample(pos_masked.shape[0]))
                     pos.append(pos_masked[idx])
                     x.append(x_masked[idx])
-                    idx_out.append(idx + num_points)
-                    num_points += pos_masked.shape[0]
-
-            sample_size = min([len(idx) for idx in idx_out])
+                idx_out.append(idx + num_points)
+                num_points += pos_masked.shape[0]
+            sample_size = min(len(idx) for idx in idx_out)
             for i, idx in enumerate(idx_out):
                 if len(idx) == sample_size:
                     continue

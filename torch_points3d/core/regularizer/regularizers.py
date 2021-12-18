@@ -148,14 +148,10 @@ class GroupLassoRegularizer(_Regularizer):
         self.lambda_reg = lambda_reg
 
     def regularized_param(self, param_weights, reg_loss_function, group_name="input_group"):
-        if group_name == "input_group":
+        if group_name in ["input_group", "hidden_group"]:
             reg_loss_function += self.lambda_reg * GroupLassoRegularizer.__inputs_groups_reg(
                 layer_weights=param_weights
             )  # apply the group norm on the input value
-        elif group_name == "hidden_group":
-            reg_loss_function += self.lambda_reg * GroupLassoRegularizer.__inputs_groups_reg(
-                layer_weights=param_weights
-            )  # apply the group norm on every hidden layer
         elif group_name == "bias_group":
             reg_loss_function += self.lambda_reg * GroupLassoRegularizer.__bias_groups_reg(
                 bias_weights=param_weights

@@ -5,7 +5,7 @@ DEBUGGING_VARS = {"FIND_NEIGHBOUR_DIST": False}
 
 def extract_histogram(spatial_ops, normalize=True):
     out = []
-    for idx, nf in enumerate(spatial_ops["neighbour_finder"]):
+    for nf in spatial_ops["neighbour_finder"]:
         dist_meters = nf.dist_meters
         temp = {}
         for dist_meter in dist_meters:

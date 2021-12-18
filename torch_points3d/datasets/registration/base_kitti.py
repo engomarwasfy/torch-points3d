@@ -105,8 +105,7 @@ class BaseKitti(Dataset):
 
     @property
     def processed_file_names(self):
-        res = [osp.join(self.mode, "matches"), osp.join(self.mode, "fragment")]
-        return res
+        return [osp.join(self.mode, "matches"), osp.join(self.mode, "fragment")]
 
     def download(self):
         log.info("WARNING: You need to first download the kitti dataset (velodyne laser data) on this website")
@@ -238,5 +237,4 @@ class BaseKitti(Dataset):
         tuple, a  LongTensor or a BoolTensor, will return a subset of the
         dataset at the specified indices."""
 
-        data = self.get(idx)
-        return data
+        return self.get(idx)

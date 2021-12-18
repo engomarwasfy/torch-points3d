@@ -58,12 +58,19 @@ class ResNetBase(nn.Module):
                 ),
                 ME.MinkowskiBatchNorm(planes * block.EXPANSION),
             )
-        layers = []
-        layers.append(
-            block(self.inplanes, planes, stride=stride, dilation=dilation, downsample=downsample, dimension=self.D)
-        )
+        layers = [
+            block(
+                self.inplanes,
+                planes,
+                stride=stride,
+                dilation=dilation,
+                downsample=downsample,
+                dimension=self.D,
+            )
+        ]
+
         self.inplanes = planes * block.EXPANSION
-        for i in range(1, blocks):
+        for _ in range(1, blocks):
             layers.append(block(self.inplanes, planes, stride=1, dilation=dilation, dimension=self.D))
 
         return nn.Sequential(*layers)

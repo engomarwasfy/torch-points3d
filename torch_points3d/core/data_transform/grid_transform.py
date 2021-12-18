@@ -219,10 +219,9 @@ class ElasticDistortion:
 
     def __call__(self, data):
         # coords = data.pos / self._spatial_resolution
-        if self._apply_distorsion:
-            if random.random() < 0.95:
-                for i in range(len(self._granularity)):
-                    data.pos = ElasticDistortion.elastic_distortion(data.pos, self._granularity[i], self._magnitude[i],)
+        if self._apply_distorsion and random.random() < 0.95:
+            for i in range(len(self._granularity)):
+                data.pos = ElasticDistortion.elastic_distortion(data.pos, self._granularity[i], self._magnitude[i],)
         return data
 
     def __repr__(self):

@@ -208,19 +208,21 @@ class PointGroup(BaseModel):
         self.loss.backward()
 
     def _dump_visuals(self, epoch):
-        if random.random() < self.opt.vizual_ratio:
-            if not hasattr(self, "visual_count"):
-                self.visual_count = 0
-            data_visual = Data(
-                pos=self.raw_pos, y=self.input.y, instance_labels=self.input.instance_labels, batch=self.input.batch
-            )
-            data_visual.semantic_pred = torch.max(self.output.semantic_logits, -1)[1]
-            data_visual.vote = self.output.offset_logits
-            nms_idx = self.output.get_instances()
-            if self.output.clusters is not None:
-                data_visual.clusters = [self.output.clusters[i].cpu() for i in nms_idx]
-                data_visual.cluster_type = self.output.cluster_type[nms_idx]
-            if not os.path.exists("viz"):
-                os.mkdir("viz")
-            torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
-            self.visual_count += 1
+        if random.random() >= self.opt.vizual_ratio:
+            return
+
+        if not hasattr(self, "visual_count"):
+            self.visual_count = 0
+        data_visual = Data(
+            pos=self.raw_pos, y=self.input.y, instance_labels=self.input.instance_labels, batch=self.input.batch
+        )
+        data_visual.semantic_pred = torch.max(self.output.semantic_logits, -1)[1]
+        data_visual.vote = self.output.offset_logits
+        nms_idx = self.output.get_instances()
+        if self.output.clusters is not None:
+            data_visual.clusters = [self.output.clusters[i].cpu() for i in nms_idx]
+            data_visual.cluster_type = self.output.cluster_type[nms_idx]
+        if not os.path.exists("viz"):
+            os.mkdir("viz")
+        torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
+        self.visual_count += 1

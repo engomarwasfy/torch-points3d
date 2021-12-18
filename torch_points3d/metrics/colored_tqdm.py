@@ -21,11 +21,7 @@ class Coloredtqdm(tqdm):
             if len(postfix[key]) != round:
                 postfix[key] += (round - len(postfix[key])) * " "
 
-        if color is not None:
-            self.postfix = color
-        else:
-            self.postfix = ""
-
+        self.postfix = color if color is not None else ""
         self.postfix += ", ".join(key + "=" + postfix[key] for key in postfix.keys())
         if color is not None:
             self.postfix += COLORS.END_TOKEN
