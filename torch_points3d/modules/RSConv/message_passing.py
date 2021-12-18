@@ -39,9 +39,7 @@ class Convolution(MessagePassing):
 
         M_hij = self.local_nn(hij)
 
-        msg = M_hij * x_j
-
-        return msg
+        return M_hij * x_j
 
     def update(self, aggr_out):
         x = self.activation(aggr_out)

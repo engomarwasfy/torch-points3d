@@ -44,24 +44,23 @@ class ExperimentFolder:
 
     def load_ply(self, epoch, split, file):
         self._data_name = "data_{}_{}_{}".format(epoch, split, file)
-        if not hasattr(self, self._data_name):
-            path_to_ply = os.path.join(self._viz_path, str(epoch), split, file)
-            if os.path.exists(path_to_ply):
-                plydata = PlyData.read(path_to_ply)
-                arr = np.asarray([e.data for e in plydata.elements])
-                names = list(arr.dtype.names)
-                pos_indices = [names.index(n) for n in self.POS_KEYS]
-                non_pos_indices = {n: names.index(n) for n in names if n not in self.POS_KEYS}
-                arr_ = rfn.structured_to_unstructured(arr).squeeze()
-                xyz = arr_[:, pos_indices]
-                data = {"xyz": xyz, "columns": non_pos_indices.keys(), "name": self._data_name}
-                for n, i in non_pos_indices.items():
-                    data[n] = arr_[:, i]
-                setattr(self, self._data_name, data)
-            else:
-                print("The file doesn' t exist: Wierd !")
-        else:
+        if hasattr(self, self._data_name):
             return getattr(self, self._data_name)
+        path_to_ply = os.path.join(self._viz_path, str(epoch), split, file)
+        if os.path.exists(path_to_ply):
+            plydata = PlyData.read(path_to_ply)
+            arr = np.asarray([e.data for e in plydata.elements])
+            names = list(arr.dtype.names)
+            pos_indices = [names.index(n) for n in self.POS_KEYS]
+            non_pos_indices = {n: names.index(n) for n in names if n not in self.POS_KEYS}
+            arr_ = rfn.structured_to_unstructured(arr).squeeze()
+            xyz = arr_[:, pos_indices]
+            data = {"xyz": xyz, "columns": non_pos_indices.keys(), "name": self._data_name}
+            for n, i in non_pos_indices.items():
+                data[n] = arr_[:, i]
+            setattr(self, self._data_name, data)
+        else:
+            print("The file doesn' t exist: Wierd !")
 
     @property
     def current_pointcloud(self):
@@ -77,9 +76,7 @@ class ExperimentFolder:
                     self._contains_viz = len(vizs) > 0
                     return self._contains_viz
             self._contains_viz = False
-            return self._contains_viz
-        else:
-            return self._contains_viz
+        return self._contains_viz
 
     @property
     def contains_trained_model(self):
@@ -90,9 +87,7 @@ class ExperimentFolder:
                     self._model_name = f
                     return self._contains_trained_model
             self._contains_trained_model = False
-            return self._contains_trained_model
-        else:
-            return self._contains_trained_model
+        return self._contains_trained_model
 
     def extract_stats(self):
         path_to_checkpoint = os.path.join(self._run_path, self.model_name)
@@ -182,9 +177,13 @@ class ExperimentManager(object):
                 num_epoch, stats = experiment.extract_stats()
                 colored_print(COLORS.Red, "Epoch: {}".format(num_epoch))
                 for metric_name in stats:
-                    sentence = ""
-                    for split_name in stats[metric_name].keys():
-                        sentence += "{}: {}, ".format(split_name, stats[metric_name][split_name])
+                    sentence = "".join(
+                        "{}: {}, ".format(
+                            split_name, stats[metric_name][split_name]
+                        )
+                        for split_name in stats[metric_name].keys()
+                    )
+
                     metric_sentence = metric_name + "({})".format(sentence[:-2])
                     colored_print(COLORS.BBlue, metric_sentence)
                 print("")

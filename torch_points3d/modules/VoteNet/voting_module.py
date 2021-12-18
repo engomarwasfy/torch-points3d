@@ -31,14 +31,13 @@ class VotingModule(nn.Module):
             self.conv1 = torch.nn.Conv1d(self.in_dim, self.in_dim, 1)
             self.conv2 = torch.nn.Conv1d(self.in_dim, self.in_dim, 1)
             self.conv3 = torch.nn.Conv1d(self.in_dim, (3 + self.out_dim) * self.vote_factor, 1)
-            self.bn1 = torch.nn.BatchNorm1d(self.in_dim)
-            self.bn2 = torch.nn.BatchNorm1d(self.in_dim)
         else:
             self.conv1 = torch.nn.Linear(self.in_dim, self.in_dim)
             self.conv2 = torch.nn.Linear(self.in_dim, self.in_dim)
             self.conv3 = torch.nn.Linear(self.in_dim, (3 + self.out_dim) * self.vote_factor)
-            self.bn1 = torch.nn.BatchNorm1d(self.in_dim)
-            self.bn2 = torch.nn.BatchNorm1d(self.in_dim)
+
+        self.bn1 = torch.nn.BatchNorm1d(self.in_dim)
+        self.bn2 = torch.nn.BatchNorm1d(self.in_dim)
 
     def forward(self, data):
         """ Votes for centres using a PN++ like architecture
@@ -49,7 +48,7 @@ class VotingModule(nn.Module):
             - x: feature of the vote (original feature + processed feature)
             - seed_pos: position of the original point
         """
-        if 3 < data.pos.dim() and data.pos.dim() <= 1:
+        if data.pos.dim() > 3 and data.pos.dim() <= 1:
             raise Exception("data.pos doesn t have the correct dimension. Should be either 2 or 3")
 
         if self._conv_type == "DENSE":
@@ -69,7 +68,7 @@ class VotingModule(nn.Module):
             vote_x = data.x.transpose(2, 1).unsqueeze(2).contiguous() + res_x.contiguous()
             vote_x = vote_x.contiguous().view(batch_size, num_votes, self.out_dim)
             vote_x = vote_x.transpose(2, 1).contiguous()
-            data_out = Data(pos=vote_pos, x=vote_x, seed_pos=data.pos)
+            return Data(pos=vote_pos, x=vote_x, seed_pos=data.pos)
         else:
             x = F.relu(self.bn1(self.conv1(data.x)))
             x = F.relu(self.bn2(self.conv2(x)))
@@ -78,8 +77,7 @@ class VotingModule(nn.Module):
             vote_pos = data.pos + offset
             res_x = x[:, 3:]
             vote_x = data.x + res_x
-            data_out = Data(pos=vote_pos, x=vote_x, seed_pos=data.pos, batch=data.batch)
-        return data_out
+            return Data(pos=vote_pos, x=vote_x, seed_pos=data.pos, batch=data.batch)
 
 
 if __name__ == "__main__":

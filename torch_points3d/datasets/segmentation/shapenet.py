@@ -165,9 +165,8 @@ class ShapeNet(InMemoryDataset):
     @property
     def processed_raw_paths(self):
         cats = "_".join([cat[:3].lower() for cat in self.categories])
-        processed_raw_paths = [os.path.join(self.processed_dir, "raw_{}_{}".format(
+        return [os.path.join(self.processed_dir, "raw_{}_{}".format(
             cats, s)) for s in ["train", "val", "test", "trainval"]]
-        return processed_raw_paths
 
     @property
     def processed_file_names(self):
@@ -265,7 +264,7 @@ class ShapeNet(InMemoryDataset):
                 ]  # Removing first directory.
             data_raw_list, data_list = self._process_filenames(
                 sorted(filenames))
-            if split == "train" or split == "val":
+            if split in ["train", "val"]:
                 if len(data_raw_list) > 0:
                     raw_trainval.append(data_raw_list)
                 trainval.append(data_list)
@@ -344,10 +343,7 @@ class ShapeNetDataset(BaseDataset):
     @property  # type: ignore
     @save_used_properties
     def class_to_segments(self):
-        classes_to_segment = {}
-        for key in self._categories:
-            classes_to_segment[key] = ShapeNet.seg_classes[key]
-        return classes_to_segment
+        return {key: ShapeNet.seg_classes[key] for key in self._categories}
 
     @property
     def is_hierarchical(self):

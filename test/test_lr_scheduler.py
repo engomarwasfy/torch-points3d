@@ -42,7 +42,7 @@ class TestLrScheduler(unittest.TestCase):
         steps = num_samples_epoch // batch_size
 
         for epoch in range(num_epochs):
-            for step in range(steps):
+            for _ in range(steps):
                 model.optimize_parameters(epoch, batch_size)
         self.assertAlmostEqual(get_lr(model._optimizer), base_lr * gamma ** (num_epochs - 1))
 
@@ -64,7 +64,7 @@ class TestLrScheduler(unittest.TestCase):
         steps = num_samples_epoch // batch_size
 
         for epoch in range(num_epochs):
-            for step in range(steps):
+            for _ in range(steps):
                 model.optimize_parameters(epoch, batch_size)
 
         self.assertAlmostEqual(get_lr(model._optimizer), base_lr * gamma ** (num_epochs))
@@ -88,7 +88,7 @@ class TestLrScheduler(unittest.TestCase):
 
         count_batch = 0
         for epoch in range(num_epochs):
-            for step in range(steps):
+            for _ in range(steps):
                 count_batch += 1
                 model.optimize_parameters(epoch, batch_size)
         self.assertAlmostEqual(get_lr(model._optimizer), base_lr * gamma ** (count_batch))

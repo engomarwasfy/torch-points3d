@@ -17,8 +17,6 @@ def download_file(url, out_file):
         urllib.request.urlretrieve(url, out_file_tmp)
         # urllib.urlretrieve(url, out_file_tmp)
         os.rename(out_file_tmp, out_file)
-    else:
-        pass
         # log.warning("WARNING Skipping download of existing file " + out_file)
 
 def main(config):
@@ -31,10 +29,12 @@ def main(config):
         check_gt = os.path.isfile(scene + ".txt")
         check_seg = os.path.isfile(scene + "_vh_clean_2.0.010000.segs.json")
         check_ply = os.path.isfile(scene + "_vh_clean_2.ply")
-        if check_aggregation_json and check_gt and check_seg and check_ply:
-            # print("success scene: {}".format(scene_raw))
-            pass
-        else:
+        if (
+            not check_aggregation_json
+            or not check_gt
+            or not check_seg
+            or not check_ply
+        ):
             print("error scene: {} | agg: {}, gt: {}, seg: {}, ply: {}".format(scene_raw, check_aggregation_json,
                                                                                check_gt, check_seg, check_ply))
             print("re-downloading the missing file...")
@@ -45,22 +45,22 @@ def main(config):
             else:
                 print("error, not supported version: {}".format(config.version))
                 break
-            if not check_aggregation_json:
-                download_link = base_url + "/" + scene_raw + "/" + scene_raw + ".aggregation.json"
-                out_filename = scene + ".aggregation.json"
-                download_file(download_link, out_filename)
-            if not check_gt:
-                download_link = base_url + "/" + scene_raw + "/" + scene_raw + ".txt"
-                out_filename = scene + ".txt"
-                download_file(download_link, out_filename)
-            if not check_seg:
-                download_link = base_url + "/" + scene_raw + "/" + scene_raw + "_vh_clean_2.0.010000.segs.json"
-                out_filename = scene + "_vh_clean_2.0.010000.segs.json"
-                download_file(download_link, out_filename)
-            if not check_ply:
-                download_link = base_url + "/" + scene_raw + "/" + scene_raw + "_vh_clean_2.ply"
-                out_filename = scene + "_vh_clean_2.ply"
-                download_file(download_link, out_filename)
+        if not check_aggregation_json:
+            download_link = base_url + "/" + scene_raw + "/" + scene_raw + ".aggregation.json"
+            out_filename = scene + ".aggregation.json"
+            download_file(download_link, out_filename)
+        if not check_gt:
+            download_link = base_url + "/" + scene_raw + "/" + scene_raw + ".txt"
+            out_filename = scene + ".txt"
+            download_file(download_link, out_filename)
+        if not check_seg:
+            download_link = base_url + "/" + scene_raw + "/" + scene_raw + "_vh_clean_2.0.010000.segs.json"
+            out_filename = scene + "_vh_clean_2.0.010000.segs.json"
+            download_file(download_link, out_filename)
+        if not check_ply:
+            download_link = base_url + "/" + scene_raw + "/" + scene_raw + "_vh_clean_2.ply"
+            out_filename = scene + "_vh_clean_2.ply"
+            download_file(download_link, out_filename)
 
 
 if __name__ == "__main__":

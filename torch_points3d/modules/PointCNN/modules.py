@@ -132,9 +132,7 @@ class XConv(torch.nn.Module):
         x_transformed = torch.matmul(transform_matrix, x_star)
         x_transformed = x_transformed.view(N, -1, K)
 
-        out = self.conv(x_transformed)
-
-        return out
+        return self.conv(x_transformed)
 
     def __repr__(self):
         return "{}({}, {})".format(self.__class__.__name__, self.in_channels, self.out_channels)

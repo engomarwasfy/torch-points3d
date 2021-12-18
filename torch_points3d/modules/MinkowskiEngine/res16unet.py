@@ -210,8 +210,7 @@ class ResNetBase(MinkowskiNetwork):
                 conv(self.inplanes, planes * block.expansion, kernel_size=1, stride=stride, bias=False, D=self.D),
                 get_norm(norm_type, planes * block.expansion, D=self.D, bn_momentum=bn_momentum),
             )
-        layers = []
-        layers.append(
+        layers = [
             block(
                 self.inplanes,
                 planes,
@@ -221,9 +220,10 @@ class ResNetBase(MinkowskiNetwork):
                 conv_type=self.CONV_TYPE,
                 D=self.D,
             )
-        )
+        ]
+
         self.inplanes = planes * block.expansion
-        for i in range(1, blocks):
+        for _ in range(1, blocks):
             layers.append(block(self.inplanes, planes, stride=1, dilation=dilation, conv_type=self.CONV_TYPE, D=self.D))
 
         return nn.Sequential(*layers)

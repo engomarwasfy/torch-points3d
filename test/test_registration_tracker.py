@@ -120,7 +120,7 @@ class TestRegistrationTracker(unittest.TestCase):
         model = MockModel()
         tracker.reset("test")
         model.iter = 0
-        for i in range(4):
+        for _ in range(4):
             tracker.track(model)
             model.iter += 1
         metrics = tracker.get_metrics()

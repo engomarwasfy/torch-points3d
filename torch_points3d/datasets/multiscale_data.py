@@ -73,17 +73,13 @@ class MultiScaleBatch(MultiScaleData):
         # Build multiscale batches
         multiscale = []
         for scale in range(num_scales):
-            ms_scale = []
-            for data_entry in data_list:
-                ms_scale.append(data_entry.multiscale[scale])
+            ms_scale = [data_entry.multiscale[scale] for data_entry in data_list]
             multiscale.append(from_data_list_token(ms_scale))
 
         # Build upsample batches
         upsample = []
         for scale in range(num_upsample):
-            upsample_scale = []
-            for data_entry in data_list:
-                upsample_scale.append(data_entry.upsample[scale])
+            upsample_scale = [data_entry.upsample[scale] for data_entry in data_list]
             upsample.append(from_data_list_token(upsample_scale))
 
         # Create batch from non multiscale data
@@ -153,7 +149,7 @@ def from_data_list_token(data_list, follow_batch=[]):
         if torch.is_tensor(item):
             batch[key] = torch.cat(
                 batch[key], dim=data_list[0].__cat_dim__(key, item))
-        elif isinstance(item, int) or isinstance(item, float):
+        elif isinstance(item, (int, float)):
             batch[key] = torch.tensor(batch[key])
         else:
             raise ValueError(

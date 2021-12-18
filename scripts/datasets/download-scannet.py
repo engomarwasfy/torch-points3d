@@ -161,10 +161,12 @@ def main():
             if file_type not in FILETYPES:
                 print('ERROR: Invalid file type: ' + file_type)
                 return
-        file_types_test = []
-        for file_type in file_types:
-            if file_type not in FILETYPES_TEST:
-                file_types_test.append(file_type)
+        file_types_test = [
+            file_type
+            for file_type in file_types
+            if file_type not in FILETYPES_TEST
+        ]
+
     if args.task_data:  # download task data
         download_task_data(out_dir_tasks)
     elif args.label_map:  # download label map file

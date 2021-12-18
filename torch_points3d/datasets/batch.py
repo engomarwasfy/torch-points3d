@@ -33,7 +33,7 @@ class SimpleBatch(Data):
         for key in keys:
             batch[key] = []
 
-        for _, data in enumerate(data_list):
+        for data in data_list:
             for key in data.keys:
                 item = data[key]
                 batch[key].append(item)

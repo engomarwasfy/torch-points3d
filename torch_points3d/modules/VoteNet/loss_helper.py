@@ -68,8 +68,9 @@ def compute_vote_loss(input, output: VoteNetResults):
     dist1, _, dist2, _ = nn_distance(vote_xyz_reshape, seed_gt_votes_reshape, l1=True)
     votes_dist, _ = torch.min(dist2, dim=1)  # (B*num_seed,vote_factor) to (B*num_seed,)
     votes_dist = votes_dist.view(batch_size, num_seed)
-    vote_loss = torch.sum(votes_dist * seed_gt_votes_mask.float()) / (torch.sum(seed_gt_votes_mask.float()) + 1e-6)
-    return vote_loss
+    return torch.sum(votes_dist * seed_gt_votes_mask.float()) / (
+        torch.sum(seed_gt_votes_mask.float()) + 1e-6
+    )
 
 
 def compute_objectness_loss(inputs, outputs: VoteNetResults, loss_params):

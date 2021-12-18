@@ -23,8 +23,7 @@ def compute_accuracy(embedded_ref_features, embedded_val_features):
     reference_neighbors = np.reshape(np.arange(number_of_test_points), newshape=(-1, 1))
 
     wrong_matches = np.count_nonzero(ind_neigh_normal - reference_neighbors)
-    accuracy = (1 - wrong_matches / number_of_test_points) * 100
-    return accuracy
+    return (1 - wrong_matches / number_of_test_points) * 100
 
 
 def compute_hit_ratio(xyz, xyz_target, T_gt, tau_1):
@@ -62,8 +61,7 @@ def compute_scaled_registration_error(xyz, T_gt, T_est, tol=1e-12):
     dist1 = torch.sqrt(torch.sum((xyz_est - xyz_gt) ** 2, axis=-1))
     dist2 = torch.sqrt(torch.sum((xyz_est - centroid) ** 2, axis=-1))
 
-    err = torch.mean(dist1 / (dist2 + tol))
-    return err
+    return torch.mean(dist1 / (dist2 + tol))
 
 
 def compute_registration_recall(xyz_gt, xyz_target_gt, T_est, thresh=0.2):

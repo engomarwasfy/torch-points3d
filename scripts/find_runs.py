@@ -43,9 +43,7 @@ class ExperimentFolder:
                     self._model_name = f
                     return self._contains_trained_model
             self._contains_trained_model = False
-            return self._contains_trained_model
-        else:
-            return self._contains_trained_model
+        return self._contains_trained_model
 
     def extract_stats(self):
         path_to_checkpoint = os.path.join(self._run_path, self.model_name)
@@ -74,21 +72,24 @@ def main(args):
         experiment = ExperimentFolder(run_path)
         if experiment.contains_trained_model:
             experiment_with_models[experiment.model_name].append(experiment)
-        else:
-            if args.d:
-                shutil.rmtree(run_path)
+        elif args.d:
+            shutil.rmtree(run_path)
 
     print("")
-    for model_name in experiment_with_models.keys():
+    for model_name, value in experiment_with_models.items():
         colored_print(COLORS.Green, str(model_name))
-        for experiment in experiment_with_models[model_name]:
+        for experiment in value:
             print(experiment)
             num_epoch, stats = experiment.extract_stats()
             colored_print(COLORS.Red, "Epoch: {}".format(num_epoch))
             for metric_name in stats:
-                sentence = ""
-                for split_name in stats[metric_name].keys():
-                    sentence += "{}: {}, ".format(split_name, stats[metric_name][split_name])
+                sentence = "".join(
+                    "{}: {}, ".format(
+                        split_name, stats[metric_name][split_name]
+                    )
+                    for split_name in stats[metric_name].keys()
+                )
+
                 metric_sentence = metric_name + "({})".format(sentence[:-2])
                 colored_print(COLORS.BBlue, metric_sentence)
             print("")

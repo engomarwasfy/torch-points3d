@@ -49,27 +49,22 @@ class SparseConv3D(FragmentBaseModel):
         self.input = Batch(pos=data.pos, x=data.x, batch=data.batch).to(device)
         if hasattr(data, "pos_target"):
             self.input_target = Batch(pos=data.pos_target, x=data.x_target, batch=data.batch_target).to(device)
-            self.match = data.pair_ind.to(torch.long).to(device)
-            self.size_match = data.size_pair_ind.to(torch.long).to(device)
-        else:
-            self.match = data.pair_ind.to(torch.long).to(device)
-            self.size_match = data.size_pair_ind.to(torch.long).to(device)
+        self.match = data.pair_ind.to(torch.long).to(device)
+        self.size_match = data.size_pair_ind.to(torch.long).to(device)
 
     def get_batch(self):
-        if self.match is not None:
-            batch = self.input.batch
-            batch_target = self.input_target.batch
-            return batch, batch_target
-        else:
+        if self.match is None:
             return None, None
+        batch = self.input.batch
+        batch_target = self.input_target.batch
+        return batch, batch_target
 
     def get_input(self):
-        if self.match is not None:
-            inp = Data(pos=self.input.pos, ind=self.match[:, 0], size=self.size_match)
-            inp_target = Data(pos=self.input_target.pos, ind=self.match[:, 1], size=self.size_match)
-            return inp, inp_target
-        else:
+        if self.match is None:
             return self.input
+        inp = Data(pos=self.input.pos, ind=self.match[:, 0], size=self.size_match)
+        inp_target = Data(pos=self.input_target.pos, ind=self.match[:, 1], size=self.size_match)
+        return inp, inp_target
 
     def apply_nn(self, input):
 

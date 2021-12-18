@@ -21,11 +21,11 @@ log = logging.getLogger(__name__)
 class ConvolutionFormatFactory:
     @staticmethod
     def check_is_dense_format(conv_type):
-        if (
-            conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower()
-            or conv_type.lower() == ConvolutionFormat.MESSAGE_PASSING.value.lower()
-            or conv_type.lower() == ConvolutionFormat.SPARSE.value.lower()
-        ):
+        if conv_type.lower() in [
+            ConvolutionFormat.PARTIAL_DENSE.value.lower(),
+            ConvolutionFormat.MESSAGE_PASSING.value.lower(),
+            ConvolutionFormat.SPARSE.value.lower(),
+        ]:
             return False
         elif conv_type.lower() == ConvolutionFormat.DENSE.value.lower():
             return True
@@ -56,7 +56,7 @@ def set_debugging_vars_to_global(cfg):
 
 
 def is_list(entity):
-    return isinstance(entity, list) or isinstance(entity, ListConfig)
+    return isinstance(entity, (list, ListConfig))
 
 
 def is_iterable(entity):
@@ -64,7 +64,7 @@ def is_iterable(entity):
 
 
 def is_dict(entity):
-    return isinstance(entity, dict) or isinstance(entity, DictConfig)
+    return isinstance(entity, (dict, DictConfig))
 
 
 def create_symlink_from_eval_to_train(eval_checkpoint_dir):

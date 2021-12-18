@@ -25,7 +25,7 @@ class TestSamplingStrategy(unittest.TestCase):
         np.random.seed(42)
 
         random_labels = []
-        for i in range(50):
+        for _ in range(50):
             random_center = random_sphere(self.data.clone())
             random_labels.append(self.labels[random_center])
 

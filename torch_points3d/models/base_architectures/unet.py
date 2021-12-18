@@ -298,12 +298,12 @@ class UnetSkipConnectionBlock(nn.Module):
         if self.innermost:
             data_out = self.inner(data, **kwargs)
             data = (data_out, data)
-            return self.up(data, **kwargs)
         else:
             data_out = self.down(data, **kwargs)
             data_out2 = self.submodule(data_out, **kwargs)
             data = (data_out2, data)
-            return self.up(data, **kwargs)
+
+        return self.up(data, **kwargs)
 
 
 ############################# UNWRAPPED UNET BASE ###################################

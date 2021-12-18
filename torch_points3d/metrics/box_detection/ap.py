@@ -27,9 +27,7 @@ def voc_ap(recall, precision):
     # where X axis (recall) changes value
     i = np.where(mrec[1:] != mrec[:-1])[0]
 
-    # and sum (\Delta recall) * prec
-    ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
-    return ap
+    return np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
 
 
 def eval_det_cls(pred, gt, ovthresh=0.25):
@@ -97,15 +95,11 @@ def eval_det_cls(pred, gt, ovthresh=0.25):
                     jmax = j
 
         # print d, ovmax
-        if ovmax > ovthresh:
-            if not R["detected"][jmax]:
-                tp[d] = 1.0
-                R["detected"][jmax] = 1
-            else:
-                fp[d] = 1.0
+        if ovmax > ovthresh and not R["detected"][jmax]:
+            tp[d] = 1.0
+            R["detected"][jmax] = 1
         else:
             fp[d] = 1.0
-
     # compute precision recall
     fp = np.cumsum(fp)
     tp = np.cumsum(tp)
@@ -164,8 +158,13 @@ def eval_detection(pred_all, gt_all, ovthresh=0.25, processes=4):
     p = Pool(processes=processes)
     ret_values = p.map(
         eval_det_cls_wrapper,
-        [(pred[classname], gt[classname], ovthresh) for classname in gt.keys() if classname in pred],
+        [
+            (pred[classname], gt[classname], ovthresh)
+            for classname in gt
+            if classname in pred
+        ],
     )
+
     p.close()
     for i, classname in enumerate(gt.keys()):
         if classname in pred:

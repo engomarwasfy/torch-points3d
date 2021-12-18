@@ -146,7 +146,7 @@ class TestSegmentationTracker(unittest.TestCase):
                 if has_left and has_right:
                     npt.assert_array_almost_equal(segmentation_resolver.full_res_preds.numpy(), raw_y)
 
-                elif has_left and not has_right:
+                elif has_left:
                     npt.assert_array_almost_equal(segmentation_resolver.full_res_preds.numpy(), left_pred)
                 else:
                     npt.assert_array_almost_equal(segmentation_resolver.full_res_preds.numpy(), right_pred)

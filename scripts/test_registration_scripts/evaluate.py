@@ -95,7 +95,7 @@ def compute_metrics(
     T_gt; 4 x 4 matrix
     """
 
-    res = dict()
+    res = {}
     t0 = time.time()
     matches_pred = get_matches(feat, feat_target, sym=sym)
     t1 = time.time()

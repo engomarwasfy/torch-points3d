@@ -188,9 +188,6 @@ def kernel_point_optimization_debug(
 
 def load_kernels(radius, num_kpoints, num_kernels, dimension, fixed):
 
-    # Number of tries in the optimization process, to ensure we get the most stable disposition
-    num_tries = 100
-
     # Kernel directory
     kernel_dir = join(DIR, "kernels/dispositions")
     if not exists(kernel_dir):
@@ -206,6 +203,9 @@ def load_kernels(radius, num_kpoints, num_kernels, dimension, fixed):
 
     # Check if already done
     if not exists(kernel_file):
+
+        # Number of tries in the optimization process, to ensure we get the most stable disposition
+        num_tries = 100
 
         # Create kernels
         kernel_points, grad_norms = kernel_point_optimization_debug(
@@ -244,7 +244,7 @@ def load_kernels(radius, num_kpoints, num_kernels, dimension, fixed):
         original_kernel = radius * np.expand_dims(original_kernel, 0)
 
         # Rotate kernels
-        kernels = np.matmul(original_kernel, R)
+        return np.matmul(original_kernel, R)
 
     else:
 
@@ -277,6 +277,4 @@ def load_kernels(radius, num_kpoints, num_kernels, dimension, fixed):
 
         # Add a small noise
         kernels = kernels
-        kernels = kernels + np.random.normal(scale=radius * 0.01, size=kernels.shape)
-
-    return kernels
+        return kernels + np.random.normal(scale=radius * 0.01, size=kernels.shape)

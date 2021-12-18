@@ -50,10 +50,7 @@ class InstanceAPMeter:
         preds = self._pred_clusters.get(classname, [])
         allgts = self._gt_clusters.get(classname, {})
         visited = {scan_id: len(gt) * [False] for scan_id, gt in allgts.items()}
-        ngt = 0
-        for gts in allgts.values():
-            ngt += len(gts)
-
+        ngt = sum(len(gts) for gts in allgts.values())
         # Start with most confident first
         preds.sort(key=lambda x: x.score, reverse=True)
         tp = np.zeros(len(preds))
@@ -95,7 +92,7 @@ class InstanceAPMeter:
         for classname in self._gt_clusters.keys():
             rec[classname], prec[classname], ap[classname] = self._eval_cls(classname, iou_threshold)
 
-        for i, classname in enumerate(self._gt_clusters.keys()):
+        for classname in self._gt_clusters.keys():
             if classname not in self._pred_clusters:
                 rec[classname] = 0
                 prec[classname] = 0
@@ -172,7 +169,7 @@ class PanopticTracker(SegmentationTracker):
 
     def finalise(self, track_instances=True, **kwargs):
         per_class_iou = self._confusion_matrix.get_intersection_union_per_class()[0]
-        self._iou_per_class = {k: v for k, v in enumerate(per_class_iou)}
+        self._iou_per_class = dict(enumerate(per_class_iou))
 
         if not track_instances:
             return
@@ -216,15 +213,14 @@ class PanopticTracker(SegmentationTracker):
             else:
                 fp += 1
         acc = tp / len(clusters)
-        tp = tp / torch.sum(labels.num_instances).cpu().item()
-        fp = fp / torch.sum(labels.num_instances).cpu().item()
+        tp /= torch.sum(labels.num_instances).cpu().item()
+        fp /= torch.sum(labels.num_instances).cpu().item()
         return tp, fp, acc
 
     @staticmethod
     def _extract_clusters(outputs, min_cluster_points):
         valid_cluster_idx = outputs.get_instances(min_cluster_points=min_cluster_points)
-        clusters = [outputs.clusters[i] for i in valid_cluster_idx]
-        return clusters
+        return [outputs.clusters[i] for i in valid_cluster_idx]
 
     @staticmethod
     def _pred_instances_per_scan(clusters, predicted_labels, scores, batch, scan_id_offset):

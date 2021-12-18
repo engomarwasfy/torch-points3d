@@ -24,10 +24,7 @@ class PosPoolLayer(torch.nn.Module):
         self.position_embedding = position_embedding
         self.reduction = reduction
         self.output_conv = True if num_outputs != num_inputs else output_conv
-        if bn:
-            self.bn = bn(num_inputs, momentum=bn_momentum)
-        else:
-            self.bn = None
+        self.bn = bn(num_inputs, momentum=bn_momentum) if bn else None
         self.activation = activation
         if self.output_conv:
             self.oconv = torch.nn.Sequential(
@@ -63,10 +60,10 @@ class PosPoolLayer(torch.nn.Module):
             shared_channels = self.num_inputs // 3
         elif self.position_embedding == "sin_cos":
             position_mat = relative_position  # [N, M, 3]
+            alpha = 100
+            wave_length = 1000
             if self.num_inputs == 9:
                 feat_dim = 1
-                wave_length = 1000
-                alpha = 100
                 feat_range = torch.arange(feat_dim, dtype=x.dtype).to(x.device)  # (feat_dim, )
                 dim_mat = torch.pow(1.0 * wave_length, (1.0 / feat_dim) * feat_range)  # (feat_dim, )
                 position_mat = alpha * position_mat.unsqueeze(-1)
@@ -76,11 +73,8 @@ class PosPoolLayer(torch.nn.Module):
                 embedding = torch.cat([sin_mat, cos_mat], -1)  # [N, M, 3, 2*feat_dim]
                 embedding = embedding.view(N, M, 6)
                 embedding = torch.cat([embedding, relative_position], -1)  # [N, M, 9]
-                geo_prior = embedding  # [N, M, mid_dim]
             else:
                 feat_dim = self.num_inputs // 6
-                wave_length = 1000
-                alpha = 100
                 feat_range = torch.arange(feat_dim, dtype=x.dtype).to(x.device)  # (feat_dim, )
                 dim_mat = torch.pow(1.0 * wave_length, (1.0 / feat_dim) * feat_range)  # (feat_dim, )
                 position_mat = alpha * position_mat.unsqueeze(-1)  # [N, M, 3, 1]
@@ -89,7 +83,7 @@ class PosPoolLayer(torch.nn.Module):
                 cos_mat = torch.cos(div_mat)  # [N, M, 3, feat_dim]
                 embedding = torch.cat([sin_mat, cos_mat], -1)  # [N, M, 3, 2*feat_dim]
                 embedding = embedding.view(N, M, self.num_inputs)  # [N, M, 6*feat_dim]
-                geo_prior = embedding  # [N, M, mid_dim]
+            geo_prior = embedding  # [N, M, mid_dim]
             mid_fdim = self.num_inputs
             shared_channels = 1
         else:

@@ -88,8 +88,9 @@ class FragmentBaseModel(BaseModel):
         else:
             xyz = self.input.pos
             xyz_target = self.input_target.pos
-        loss_reg = self.metric_loss_module(self.output, self.output_target, self.match[:, :2], xyz, xyz_target)
-        return loss_reg
+        return self.metric_loss_module(
+            self.output, self.output_target, self.match[:, :2], xyz, xyz_target
+        )
 
     def compute_loss_label(self):
         """
@@ -102,9 +103,7 @@ class FragmentBaseModel(BaseModel):
         hard_pairs = None
         if self.miner_module is not None:
             hard_pairs = self.miner_module(output, labels)
-        # loss
-        loss_reg = self.metric_loss_module(output, labels, hard_pairs)
-        return loss_reg
+        return self.metric_loss_module(output, labels, hard_pairs)
 
     def compute_loss(self):
         if self.mode == "match":

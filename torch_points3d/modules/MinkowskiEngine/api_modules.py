@@ -75,10 +75,7 @@ class ResBlock(ME.MinkowskiNetwork):
 
     def forward(self, x):
         out = self.block(x)
-        if self.downsample:
-            out += self.downsample(x)
-        else:
-            out += x
+        out += self.downsample(x) if self.downsample else x
         return out
 
 
@@ -152,10 +149,7 @@ class BottleneckBlock(ME.MinkowskiNetwork):
 
     def forward(self, x):
         out = self.block(x)
-        if self.downsample:
-            out += self.downsample(x)
-        else:
-            out += x
+        out += self.downsample(x) if self.downsample else x
         return out
 
 
@@ -203,10 +197,7 @@ class SEBlock(ResBlock):
     def forward(self, x):
         out = self.block(x)
         out = self.SE(out)
-        if self.downsample:
-            out += self.downsample(x)
-        else:
-            out += x
+        out += self.downsample(x) if self.downsample else x
         return out
 
 
@@ -222,10 +213,7 @@ class SEBottleneckBlock(BottleneckBlock):
     def forward(self, x):
         out = self.block(x)
         out = self.SE(out)
-        if self.downsample:
-            out += self.downsample(x)
-        else:
-            out += x
+        out += self.downsample(x) if self.downsample else x
         return out
 
 
@@ -248,11 +236,7 @@ class ResNetDown(ME.MinkowskiNetwork):
     ):
         block = getattr(_res_blocks, block)
         ME.MinkowskiNetwork.__init__(self, dimension)
-        if stride > 1:
-            conv1_output = down_conv_nn[0]
-        else:
-            conv1_output = down_conv_nn[1]
-
+        conv1_output = down_conv_nn[0] if stride > 1 else down_conv_nn[1]
         self.conv_in = (
             Seq()
             .append(
@@ -304,8 +288,5 @@ class ResNetUp(ResNetDown):
         )
 
     def forward(self, x, skip):
-        if skip is not None:
-            inp = ME.cat(x, skip)
-        else:
-            inp = x
+        inp = ME.cat(x, skip) if skip is not None else x
         return super().forward(inp)

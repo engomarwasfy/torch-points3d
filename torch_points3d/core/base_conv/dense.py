@@ -68,10 +68,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
             can be used to shortcut the sampler [B,K]
         """
         x, pos = data.x, data.pos
-        if sample_idx:
-            idx = sample_idx
-        else:
-            idx = self.sampler(pos)
+        idx = sample_idx or self.sampler(pos)
         idx = idx.unsqueeze(-1).repeat(1, 1, pos.shape[-1]).long()
         new_pos = pos.gather(1, idx)
 
@@ -132,16 +129,14 @@ class DenseFPModule(BaseDenseConvolutionUp):
     def conv(self, pos, pos_skip, x):
         assert pos_skip.shape[2] == 3
 
-        if pos is not None:
-            dist, idx = tp.three_nn(pos_skip, pos)
-            dist_recip = 1.0 / (dist + 1e-8)
-            norm = torch.sum(dist_recip, dim=2, keepdim=True)
-            weight = dist_recip / norm
-            interpolated_feats = tp.three_interpolate(x, idx, weight)
-        else:
-            interpolated_feats = x.expand(*(x.size()[0:2] + (pos_skip.size(1),)))
+        if pos is None:
+            return x.expand(*x.size()[:2] + (pos_skip.size(1),))
 
-        return interpolated_feats
+        dist, idx = tp.three_nn(pos_skip, pos)
+        dist_recip = 1.0 / (dist + 1e-8)
+        norm = torch.sum(dist_recip, dim=2, keepdim=True)
+        weight = dist_recip / norm
+        return tp.three_interpolate(x, idx, weight)
 
     def __repr__(self):
         return "{}: {} ({})".format(self.__class__.__name__, self.nb_params, self.nn)
@@ -163,7 +158,7 @@ class GlobalDenseBaseModule(torch.nn.Module):
             [type] -- [description]
         """
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
-        self._nb_params = sum([np.prod(p.size()) for p in model_parameters])
+        self._nb_params = sum(np.prod(p.size()) for p in model_parameters)
         return self._nb_params
 
     def forward(self, data, **kwargs):

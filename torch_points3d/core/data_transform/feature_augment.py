@@ -17,7 +17,7 @@ class NormalizeRGB(object):
 
     def __call__(self, data):
         assert hasattr(data, "rgb")
-        if not (data.rgb.max() <= 1 and data.rgb.min() >= 0):
+        if data.rgb.max() > 1 or data.rgb.min() < 0:
             data.rgb = data.rgb.float() / 255.0
         return data
 

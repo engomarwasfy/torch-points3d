@@ -18,13 +18,16 @@ from omegaconf import OmegaConf
 _custom_transforms = sys.modules[__name__]
 _torch_geometric_transforms = sys.modules["torch_geometric.transforms"]
 _intersection_names = set(_custom_transforms.__dict__) & set(_torch_geometric_transforms.__dict__)
-_intersection_names = set([module for module in _intersection_names if not module.startswith("_")])
+_intersection_names = {
+    module for module in _intersection_names if not module.startswith("_")
+}
+
 L_intersection_names = len(_intersection_names) > 0
 _intersection_cls = []
 
 for transform_name in _intersection_names:
     transform_cls = getattr(_custom_transforms, transform_name)
-    if not "torch_geometric.transforms." in str(transform_cls):
+    if "torch_geometric.transforms." not in str(transform_cls):
         _intersection_cls.append(transform_cls)
 L_intersection_cls = len(_intersection_cls) > 0
 
@@ -66,8 +69,8 @@ def instantiate_transform(transform_option, attr="transform"):
     cls = getattr(_custom_transforms, tr_name, None)
     if not cls:
         cls = getattr(_torch_geometric_transforms, tr_name, None)
-        if not cls:
-            raise ValueError("Transform %s is nowhere to be found" % tr_name)
+    if not cls:
+        raise ValueError("Transform %s is nowhere to be found" % tr_name)
 
     if tr_params and lparams:
         return cls(*lparams, **tr_params)
@@ -88,16 +91,15 @@ def instantiate_transforms(transform_options):
             size: 0.01
     - transform: NormaliseScale
     """
-    transforms = []
-    for transform in transform_options:
-        transforms.append(instantiate_transform(transform))
+    transforms = [
+        instantiate_transform(transform) for transform in transform_options
+    ]
+
     return T.Compose(transforms)
 
 
 def instantiate_filters(filter_options):
-    filters = []
-    for filt in filter_options:
-        filters.append(instantiate_transform(filt, "filter"))
+    filters = [instantiate_transform(filt, "filter") for filt in filter_options]
     return FCompose(filters)
 
 
@@ -124,8 +126,8 @@ class LotteryTransform(object):
     def __repr__(self):
         rep = "LotteryTransform(["
         for trans in self.random_transforms.transforms:
-            rep = rep + "{}, ".format(trans.__repr__())
-        rep = rep + "])"
+            rep += "{}, ".format(trans.__repr__())
+        rep += "])"
         return rep
 
 
@@ -159,8 +161,8 @@ class ComposeTransform(object):
     def __repr__(self):
         rep = "ComposeTransform(["
         for trans in self.transform.transforms:
-            rep = rep + "{}, ".format(trans.__repr__())
-        rep = rep + "])"
+            rep += "{}, ".format(trans.__repr__())
+        rep += "])"
         return rep
 
 
@@ -217,7 +219,7 @@ class RandomParamTransform(object):
         self.random_transform = self._instanciate_transform_with_random_params()
 
     def _instanciate_transform_with_random_params(self):
-        dico = dict()
+        dico = {}
         for p, rang in self.transform_params.items():
             if "max" in rang and "min" in rang:
                 assert rang["max"] - rang["min"] > 0
@@ -237,8 +239,7 @@ class RandomParamTransform(object):
                 raise NotImplementedError
 
         trans_opt = DictConfig(dict(params=dico, transform=self.transform_name))
-        random_transform = instantiate_transform(trans_opt, attr="transform")
-        return random_transform
+        return instantiate_transform(trans_opt, attr="transform")
 
     def __call__(self, data):
         self.random_transform = self._instanciate_transform_with_random_params()

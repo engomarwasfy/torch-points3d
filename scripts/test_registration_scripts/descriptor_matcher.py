@@ -63,8 +63,7 @@ def compute_dists(kp_source, kp_target, trans):
     compute distance between points that are matches
     """
     kp_target_t = kp_target.dot(trans[:3, :3].T) + trans[:3, 3]
-    dist = np.linalg.norm(kp_source - kp_target_t, axis=1)
-    return dist
+    return np.linalg.norm(kp_source - kp_target_t, axis=1)
 
 
 def compute_mean_correct_matches(dist, list_tau, is_leq=True):
@@ -91,7 +90,7 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
     feat_s = data_source["feat"]
     feat_t = data_target["feat"]
 
-    if len(data_source["feat"]) != len(data_source["keypoints"]):
+    if len(feat_s) != len(data_source["keypoints"]):
         # Sampled features using keypoints.
         feat_s = feat_s[data_source["keypoints"]]
         feat_t = feat_t[data_target["keypoints"]]

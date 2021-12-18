@@ -48,10 +48,7 @@ class PatchPointNet2_D(BackboneBasedModel):
 
         if getattr(data, "pos_target", None) is not None:
             assert len(data.pos.shape) == 3 and len(data.pos_target.shape) == 3
-            if data.x is not None:
-                x = torch.cat([data.x, data.x_target], 0)
-            else:
-                x = None
+            x = torch.cat([data.x, data.x_target], 0) if data.x is not None else None
             pos = torch.cat([data.pos, data.pos_target], 0)
             rang = torch.arange(0, data.pos.shape[0])
 
@@ -148,10 +145,7 @@ class FragmentPointNet2_D(UnetBasedModel, FragmentBaseModel):
         """
         assert len(data.pos.shape) == 3
 
-        if data.x is not None:
-            x = data.x.transpose(1, 2).contiguous()
-        else:
-            x = None
+        x = data.x.transpose(1, 2).contiguous() if data.x is not None else None
         self.input = Data(x=x, pos=data.pos).to(device)
 
         if hasattr(data, "pos_target"):
@@ -183,21 +177,20 @@ class FragmentPointNet2_D(UnetBasedModel, FragmentBaseModel):
             return input
 
     def get_batch(self):
-        if self.match is not None:
-            batch = (
-                torch.arange(0, self.input.pos.shape[0])
-                .view(-1, 1)
-                .repeat(1, self.input.pos.shape[1])
-                .view(-1)
-                .to(self.input.pos.device)
-            )
-            batch_target = (
-                torch.arange(0, self.input_target.pos.shape[0])
-                .view(-1, 1)
-                .repeat(1, self.input_target.pos.shape[1])
-                .view(-1)
-                .to(self.input.pos.device)
-            )
-            return batch, batch_target
-        else:
+        if self.match is None:
             return None, None
+        batch = (
+            torch.arange(0, self.input.pos.shape[0])
+            .view(-1, 1)
+            .repeat(1, self.input.pos.shape[1])
+            .view(-1)
+            .to(self.input.pos.device)
+        )
+        batch_target = (
+            torch.arange(0, self.input_target.pos.shape[0])
+            .view(-1, 1)
+            .repeat(1, self.input_target.pos.shape[1])
+            .view(-1)
+            .to(self.input.pos.device)
+        )
+        return batch, batch_target

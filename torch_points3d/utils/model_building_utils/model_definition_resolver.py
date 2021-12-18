@@ -24,7 +24,7 @@ def resolve(obj, constants):
     returns False if obj is a ListConfig or DictConfig, True is obj is a primative type.
     """
     if type(obj) == DictConfig:
-        it = (k for k in obj)
+        it = iter(obj)
     elif type(obj) == ListConfig:
         it = range(len(obj))
     else:
@@ -35,17 +35,13 @@ def resolve(obj, constants):
     for k in it:
 
         # if obj[k] is a primative type, evalulate it
-        if resolve(obj[k], constants):
-            if type(obj[k]) is str:
-                try:
-                    obj[k] = eval(obj[k], constants)
-                except NameError:
-                    # we tried to resolve a string which isn't an expression
-                    pass
-                except ValueError:
-                    # we tried to resolve a string which is also a builtin (e.g. max)
-                    pass
-                except Exception as e:
-                    print(e)
+        if resolve(obj[k], constants) and type(obj[k]) is str:
+            try:
+                obj[k] = eval(obj[k], constants)
+            except (NameError, ValueError):
+                # we tried to resolve a string which isn't an expression
+                pass
+            except Exception as e:
+                print(e)
 
     return False

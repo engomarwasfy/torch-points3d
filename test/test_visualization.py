@@ -19,7 +19,7 @@ num_points = 20
 
 def run(iter, visualizer, epoch, stage, data):
     visualizer.reset(epoch, stage)
-    for i in range(iter):
+    for _ in range(iter):
         visualizer.save_visuals(data)
 
 

@@ -45,11 +45,7 @@ class VoteNet2(BaseModel):
         self._kpconv_backbone = backbone_cls.__name__ == "KPConv"
         self.is_dense_format = self.conv_type == "DENSE"
         dropout = option.get("dropout", None)
-        if dropout is not None:
-            self.dropout = torch.nn.Dropout(dropout)
-        else:
-            self.dropout = None
-
+        self.dropout = torch.nn.Dropout(dropout) if dropout is not None else None
         # 2 - SEGMENTATION HEAD
         semantic_supervision = option.get("semantic_supervision", False)
         if semantic_supervision:
@@ -197,25 +193,4 @@ class VoteNet2(BaseModel):
         return self.backbone_model.get_spatial_ops()
 
     def _dump_visuals(self):
-        if True:
-            return
-        if not hasattr(self, "visual_count"):
-            self.visual_count = 0
-
-        pred_boxes = self.output.get_boxes(self._dataset, apply_nms=True)
-        gt_boxes = []
-
-        for idx in range(len(pred_boxes)):
-            # Ground truth
-            sample_boxes = self.input.instance_box_corners[idx]
-            sample_boxes = sample_boxes[self.input.box_label_mask[idx]]
-            sample_labels = self.input.sem_cls_label[idx]
-            gt_box_data = [BoxData(sample_labels[i].item(), sample_boxes[i]) for i in range(len(sample_boxes))]
-            gt_boxes.append(gt_box_data)
-
-        data_visual = Data(pos=self.input.pos, batch=self.input.batch, gt_boxes=gt_boxes, pred_boxes=pred_boxes)
-
-        if not os.path.exists("viz"):
-            os.mkdir("viz")
-        torch.save(data_visual.to("cpu"), "viz/data_%i.pt" % (self.visual_count))
-        self.visual_count += 1
+        return

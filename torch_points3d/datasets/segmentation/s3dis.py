@@ -105,8 +105,7 @@ VALIDATION_ROOMS = [
 
 def object_name_to_label(object_class):
     """convert from object name in S3DIS to an int"""
-    object_label = OBJECT_LABEL.get(object_class, OBJECT_LABEL["clutter"])
-    return object_label
+    return OBJECT_LABEL.get(object_class, OBJECT_LABEL["clutter"])
 
 
 def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debug=False):
@@ -147,8 +146,7 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
         room_label = np.asarray([room_label])
         instance_labels = np.zeros((n_ver,), dtype="int64")
         objects = glob.glob(osp.join(train_file, "Annotations/*.txt"))
-        i_object = 1
-        for single_object in objects:
+        for i_object, single_object in enumerate(objects, start=1):
             object_name = os.path.splitext(os.path.basename(single_object))[0]
             if verbose:
                 log.debug("adding object " + str(i_object) + " : " + object_name)
@@ -158,8 +156,6 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
             _, obj_ind = nn.kneighbors(obj_ver[:, 0:3])
             semantic_labels[obj_ind] = object_label
             instance_labels[obj_ind] = i_object
-            i_object = i_object + 1
-
         return (
             torch.from_numpy(xyz),
             torch.from_numpy(rgb),
@@ -390,9 +386,8 @@ class S3DISOriginalFused(InMemoryDataset):
                     area_idx = int(area.split("_")[-1])
                     if areas[area_idx] == 5:
                         continue
-                    else:
-                        print(area_idx)
-                        areas[area_idx] += 1
+                    print(area_idx)
+                    areas[area_idx] += 1
 
                 area_num = int(area[-1]) - 1
                 if self.debug:
@@ -405,11 +400,7 @@ class S3DISOriginalFused(InMemoryDataset):
 
                     rgb_norm = rgb.float() / 255.0
                     data = Data(pos=xyz, y=semantic_labels, rgb=rgb_norm)
-                    if room_name in VALIDATION_ROOMS:
-                        data.validation_set = True
-                    else:
-                        data.validation_set = False
-
+                    data.validation_set = room_name in VALIDATION_ROOMS
                     if self.keep_instance:
                         data.instance_labels = instance_labels
 

@@ -10,10 +10,7 @@ from torch_points3d.models.base_model import BaseInternalLossModule
 def add_ones(query_points, x, add_one):
     if add_one:
         ones = torch.ones(query_points.shape[0], dtype=torch.float).unsqueeze(-1).to(query_points.device)
-        if x is not None:
-            x = torch.cat([ones.to(x.dtype), x], dim=-1)
-        else:
-            x = ones
+        x = torch.cat([ones.to(x.dtype), x], dim=-1) if x is not None else ones
     return x
 
 
@@ -80,7 +77,7 @@ class KPConvLayer(torch.nn.Module):
         """
         x = add_ones(support_points, x, self.add_one)
 
-        new_feat = KPConv_ops(
+        return KPConv_ops(
             query_points,
             support_points,
             neighbors,
@@ -91,7 +88,6 @@ class KPConvLayer(torch.nn.Module):
             self.KP_influence,
             self.aggregation_mode,
         )
-        return new_feat
 
     def __repr__(self):
         return "KPConvLayer(InF: %i, OutF: %i, kernel_pts: %i, radius: %.2f, KP_influence: %s, Add_one: %s)" % (

@@ -36,7 +36,7 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(trainer.precompute_multi_scale, False)
         self.assertEqual(trainer.wandb_log, False)
 
-        keys = [k for k in trainer._tracker.get_metrics().keys()]
+        keys = list(trainer._tracker.get_metrics().keys())
         self.assertEqual(keys, ["test_loss_seg", "test_Cmiou", "test_Imiou"])
         trainer._cfg.voting_runs = 2
         trainer.eval()

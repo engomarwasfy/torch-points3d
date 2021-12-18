@@ -118,16 +118,15 @@ class BaseMS_SparseConv3d(FragmentBaseModel):
             return self.input.batch, None
 
     def get_input(self):
-        if self.match is not None:
-            input = self.input.clone()
-            input_target = self.input_target.clone()
-            input.ind = self.match[:, 0]
-            input_target.ind = self.match[:, 1]
-            input.size = self.size_match
-            input_target.size = self.size_match
-            return input, input_target
-        else:
+        if self.match is None:
             return self.input, None
+        input = self.input.clone()
+        input_target = self.input_target.clone()
+        input.ind = self.match[:, 0]
+        input_target.ind = self.match[:, 1]
+        input.size = self.size_match
+        input_target.size = self.size_match
+        return input, input_target
 
     def apply_nn(self, input):
         raise NotImplementedError("It depends on the networks")

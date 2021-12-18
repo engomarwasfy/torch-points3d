@@ -121,15 +121,9 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
     )
     loader = dataset.test_dataset[0]
 
-    ind = 0
-    if cfg.ind is not None:
-        ind = cfg.ind
-    t = 5
-    if cfg.t is not None:
-        t = cfg.t
-    r = 0.1
-    if cfg.r is not None:
-        r = cfg.r
+    ind = cfg.ind if cfg.ind is not None else 0
+    t = cfg.t if cfg.t is not None else 5
+    r = cfg.r if cfg.r is not None else 0.1
     print(loader)
     print(ind)
     data = loader[ind]

@@ -60,10 +60,7 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
         if data.x is not None:
             data.x = data.x.transpose(1, 2).contiguous()
         self.input = data
-        if data.y is not None:
-            self.labels = torch.flatten(data.y).long()  # [B,N]
-        else:
-            self.labels = data.y
+        self.labels = torch.flatten(data.y).long() if data.y is not None else data.y
         self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
         if self._use_category:
             self.category = data.category
@@ -115,8 +112,11 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
             )
 
         self.data_visual = self.input
-        self.data_visual.y = torch.reshape(self.labels, data.pos.shape[0:2])
-        self.data_visual.pred = torch.max(self.output, -1)[1].reshape(data.pos.shape[0:2])
+        self.data_visual.y = torch.reshape(self.labels, data.pos.shape[:2])
+        self.data_visual.pred = torch.max(self.output, -1)[1].reshape(
+            data.pos.shape[:2]
+        )
+
 
         return self.output
 

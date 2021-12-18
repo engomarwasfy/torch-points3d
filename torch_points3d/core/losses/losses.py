@@ -85,11 +85,7 @@ class FocalLoss(torch.nn.modules.loss._Loss):
             at = self._alphas.gather(0, target)
             logpt = logpt * Variable(at)
 
-        if self.normalized:
-            sum_ = 1 / torch.sum((1 - pt) ** self._gamma)
-        else:
-            sum_ = 1
-
+        sum_ = 1 / torch.sum((1 - pt) ** self._gamma) if self.normalized else 1
         loss = -1 * sum_ * (1 - pt) ** self._gamma * logpt
         return loss.sum()
 
@@ -101,5 +97,4 @@ class WrapperKLDivLoss(torch.nn.modules.loss._Loss):
     def forward(self, input, target, label_vec=None, segm_size=None):
         label_vec = Variable(label_vec).float() / segm_size.unsqueeze(-1).float()
         input = F.log_softmax(input, dim=-1)
-        loss = torch.nn.modules.loss.KLDivLoss()(input, label_vec)
-        return loss
+        return torch.nn.modules.loss.KLDivLoss()(input, label_vec)

@@ -51,10 +51,7 @@ class SimpleBlock(BaseModule):
                                     bn=bn)
 
         is_strided = prev_grid_size != grid_size
-        if is_strided:
-            self.sampler = GridSampling3D(grid_size)
-        else:
-            self.sampler = None
+        self.sampler = GridSampling3D(grid_size) if is_strided else None
 
     def forward(self, data, precomputed=None, **kwargs):
         if not hasattr(data, "block_idx"):
@@ -63,11 +60,7 @@ class SimpleBlock(BaseModule):
         if precomputed:
             query_data = precomputed[data.block_idx]
         else:
-            if self.sampler:
-                query_data = self.sampler(data.clone())
-            else:
-                query_data = data.clone()
-
+            query_data = self.sampler(data.clone()) if self.sampler else data.clone()
         if precomputed:
             idx_neighboors = query_data.idx_neighboors
             q_pos = query_data.pos
@@ -134,10 +127,7 @@ class SimpleInputBlock(BaseModule):
                                     bn=bn)
 
         is_strided = prev_grid_size != grid_size
-        if is_strided:
-            self.sampler = GridSampling3D(grid_size)
-        else:
-            self.sampler = None
+        self.sampler = GridSampling3D(grid_size) if is_strided else None
 
     def forward(self, data, precomputed=None, **kwargs):
         if not hasattr(data, "block_idx"):
@@ -146,11 +136,7 @@ class SimpleInputBlock(BaseModule):
         if precomputed:
             query_data = precomputed[data.block_idx]
         else:
-            if self.sampler:
-                query_data = self.sampler(data.clone())
-            else:
-                query_data = data.clone()
-
+            query_data = self.sampler(data.clone()) if self.sampler else data.clone()
         if precomputed:
             idx_neighboors = query_data.idx_neighboors
             q_pos = query_data.pos
@@ -216,11 +202,7 @@ class ResnetBBlock(BaseModule):
         self.has_bottleneck = has_bottleneck
 
         # Main branch
-        if self.has_bottleneck:
-            channel_size = [d_2, d_2]
-        else:
-            channel_size = [num_inputs, num_outputs]
-
+        channel_size = [d_2, d_2] if self.has_bottleneck else [num_inputs, num_outputs]
         self.aggregation = SimpleBlock(
             down_conv_nn=channel_size,
             grid_size=grid_size,
@@ -247,16 +229,15 @@ class ResnetBBlock(BaseModule):
                 self.unary_2 = torch.nn.Sequential(Lin(d_2, num_outputs, bias=False))
 
         # Shortcut
-        if num_inputs != num_outputs:
-            if bn:
-                self.shortcut_op = torch.nn.Sequential(
-                    Lin(num_inputs, num_outputs, bias=False), bn(num_outputs, momentum=bn_momentum)
-                )
-            else:
-                self.shortcut_op = Lin(num_inputs, num_outputs, bias=False)
-        else:
+        if num_inputs == num_outputs:
             self.shortcut_op = torch.nn.Identity()
 
+        elif bn:
+            self.shortcut_op = torch.nn.Sequential(
+                Lin(num_inputs, num_outputs, bias=False), bn(num_outputs, momentum=bn_momentum)
+            )
+        else:
+            self.shortcut_op = Lin(num_inputs, num_outputs, bias=False)
         # Final activation
         self.activation = activation
 
@@ -337,9 +318,9 @@ class PPStageBlock(BaseModule):
         self.blocks = torch.nn.ModuleList()
         for i, class_name in enumerate(block_names):
             # Constructing extra keyword arguments
-            block_kwargs = {}
-            for key, arg in kwargs.items():
-                block_kwargs[key] = arg[i] if is_list(arg) else arg
+            block_kwargs = {
+                key: arg[i] if is_list(arg) else arg for key, arg in kwargs.items()
+            }
 
             # Building the block
             aggcls = getattr(sys.modules[__name__], class_name)

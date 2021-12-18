@@ -18,8 +18,7 @@ def euler_angles_to_rotation_matrix(theta, random_order=False):
     matrices = [R_x, R_y, R_z]
     if random_order:
         random.shuffle(matrices)
-    R = torch.mm(matrices[2], torch.mm(matrices[1], matrices[0]))
-    return R
+    return torch.mm(matrices[2], torch.mm(matrices[1], matrices[0]))
 
 
 def get_cross_product_matrix(k):
@@ -33,8 +32,11 @@ def rodrigues(axis, theta):
     """
     K = get_cross_product_matrix(axis)
     t = torch.tensor([theta], device=axis.device)
-    R = torch.eye(3, device=axis.device) + torch.sin(t) * K + (1 - torch.cos(t)) * K.mm(K)
-    return R
+    return (
+        torch.eye(3, device=axis.device)
+        + torch.sin(t) * K
+        + (1 - torch.cos(t)) * K.mm(K)
+    )
 
 
 def get_trans(x):
